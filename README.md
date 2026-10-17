@@ -1,1 +1,0 @@
-# gyema-plataformas-moveis

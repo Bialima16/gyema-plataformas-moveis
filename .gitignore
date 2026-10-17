@@ -1,0 +1,13 @@
+# Gradle e builds
+.gradle/
+.kotlin/
+**/build/
+/local.properties
+# Configuracoes locais de IDE
+.idea/
+*.iml
+.vscode/
+.externalNativeBuild/
+.cxx/
+.DS_Store
+Thumbs.db
