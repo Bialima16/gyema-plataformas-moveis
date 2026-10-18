@@ -20,5 +20,8 @@
             android:theme="@style/Theme.Gyema.Auth" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".PasswordRecoveryActivity" android:exported="false"
             android:theme="@style/Theme.Gyema.Auth" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".WorkoutSummaryActivity" android:exported="false" android:theme="@style/Theme.Gyema.Workout" />
+        <activity android:name=".ExerciseDetailsActivity" android:exported="false" android:theme="@style/Theme.Gyema.Workout" />
+        <activity android:name=".EquipmentOccupiedActivity" android:exported="false" android:theme="@style/Theme.Gyema.Workout" />
     </application>
 </manifest>

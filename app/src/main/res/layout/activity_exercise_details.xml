@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:ns1="http://schemas.android.com/tools" android:id="@+id/workout_root" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@color/workout_navy" ns1:context=".ExerciseDetailsActivity">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <ImageButton android:id="@+id/workout_back" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/workout_card" android:padding="14dp" android:src="@drawable/model_ic_back" android:contentDescription="@string/workout_back" />
+            <TextView style="@style/WorkoutText" android:text="@string/workout_supino_title" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="12dp" android:textStyle="bold" android:textSize="18sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="32dp">
+            <Button android:id="@+id/exercise_tab_video" style="@style/WorkoutTab" android:text="@string/workout_video" />
+            <Button android:id="@+id/exercise_tab_muscles" style="@style/WorkoutTab" android:text="@string/workout_muscles" />
+            <Button android:id="@+id/exercise_tab_description" style="@style/WorkoutTab" android:text="@string/workout_description" />
+            <Button android:id="@+id/exercise_tab_history" style="@style/WorkoutTab" android:text="@string/workout_history" />
+        </LinearLayout>
+        <FrameLayout android:id="@+id/exercise_media" android:layout_width="match_parent" android:layout_height="180dp" android:layout_marginTop="12dp" android:background="@drawable/workout_card">
+            <ImageButton android:id="@+id/exercise_play" android:layout_width="56dp" android:layout_height="56dp" android:src="@drawable/workout_play" android:background="@android:color/transparent" android:contentDescription="@string/workout_video" />
+            <TextView style="@style/WorkoutText" android:text="@string/workout_media_pending" android:layout_gravity="center" android:gravity="center" android:textColor="@color/workout_muted" />
+        </FrameLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:id="@+id/exercise_muscle_panel" android:layout_marginTop="20dp" android:padding="14dp" android:background="@drawable/workout_card">
+            <TextView style="@style/WorkoutText" android:text="@string/workout_muscles_heading" android:textSize="12sp" android:textStyle="bold" />
+            <TextView style="@style/WorkoutText" android:text="@string/workout_primary" android:layout_marginTop="8dp" />
+            <TextView style="@style/WorkoutText" android:text="@string/workout_secondary" android:layout_marginTop="4dp" android:textColor="@color/workout_muted" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:id="@+id/exercise_tips_panel" android:layout_marginTop="20dp">
+            <TextView style="@style/WorkoutText" android:text="@string/workout_tips_heading" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="10dp">
+                <View android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/workout_dot" android:layout_marginEnd="10dp" />
+                <TextView style="@style/WorkoutText" android:text="@string/workout_tip_one" android:layout_width="0dp" android:layout_weight="1" android:textColor="@color/workout_muted" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="10dp">
+                <View android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/workout_dot" android:layout_marginEnd="10dp" />
+                <TextView style="@style/WorkoutText" android:text="@string/workout_tip_two" android:layout_width="0dp" android:layout_weight="1" android:textColor="@color/workout_muted" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="10dp">
+                <View android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/workout_dot" android:layout_marginEnd="10dp" />
+                <TextView style="@style/WorkoutText" android:text="@string/workout_tip_three" android:layout_width="0dp" android:layout_weight="1" android:textColor="@color/workout_muted" />
+            </LinearLayout>
+        </LinearLayout>
+        <TextView style="@style/WorkoutText" android:text="@string/workout_description_pending" android:id="@+id/exercise_info" android:visibility="gone" android:layout_marginTop="20dp" android:textColor="@color/workout_muted" />
+    </LinearLayout>
+</ScrollView>

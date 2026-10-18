@@ -39,3 +39,33 @@ Parta da main atualizada e crie sua branch (`git switch main`, `git pull --ff-on
 - `:app:lintDebug` não concluiu: `com.android.tools.lint:lint-gradle:32.0.1` ausente no cache offline. Não foram adicionadas dependências nem atualizadas ferramentas.
 - Não foram executados testes em dispositivo/emulador ou inspeção visual no Layout Editor. Os fluxos, teclado, fonte ampliada e aparência precisam ser conferidos seguindo o roteiro acima. Nenhum emulador foi aberto automaticamente.
 - Permanecem os avisos de compatibilidade SDK 37/AGP e metadados do SDK; a API nativa de ajuste de insets também gera aviso de depreciação na compilação inicial, sem impedir o build.
+
+## Resumo, exercício e equipamento ocupado
+
+Novas telas baseadas na referência visual enviada, sem alterar Boas-vindas/Login:
+
+| Activity | Layout em `app/src/main/res/layout/` |
+| --- | --- |
+| `WorkoutSummaryActivity` | `activity_workout_summary.xml` |
+| `ExerciseDetailsActivity` | `activity_exercise_details.xml` |
+| `EquipmentOccupiedActivity` | `activity_equipment_occupied.xml` |
+
+Código em `app/src/main/java/br/com/gyema/`; textos/cores/estilos em `res/values/workout.xml`, seletores em `res/color/` e fundos/ícones em `res/drawable/workout_*`. As telas usam Views nativas e ScrollView com insets das barras do sistema, sem novas bibliotecas. O resumo usa exatamente os dados de demonstração da imagem; não representa um treino registrado.
+
+A foto/vídeo original do supino não foi fornecida como arquivo separado. A área de mídia está identificada como pendente; o player não simula reprodução. A aba Vídeo mantém os cartões da referência; Músculos mostra a musculatura, e Descrição/Histórico indicam as integrações pendentes. A reorganização e o catálogo de alternativas também são pendentes; nenhum treino é alterado e a ocupação não é detectada automaticamente.
+
+Para testar cada tela sem mudar o launcher: selecione a variante **debug**, abra **Run > Edit Configurations > app > Launch Options > Specified Activity** e escolha a Activity desejada. Instale/execute somente no dispositivo ou emulador que você selecionar. Depois restaure **Default Activity** para abrir Boas-vindas. As três Activities são exportadas apenas no Manifest de debug para permitir essa inspeção; em release são internas.
+
+Com um dispositivo já conectado e o APK de debug instalado, também é possível usar:
+
+```sh
+adb shell am start -n br.com.gyema/.WorkoutSummaryActivity
+adb shell am start -n br.com.gyema/.ExerciseDetailsActivity
+adb shell am start -n br.com.gyema/.EquipmentOccupiedActivity
+```
+
+Na integração, a tela Meus Treinos deverá abrir o resumo/detalhes por Intent; o resumo e os controles de voltar usam `finish()` para retornar ao chamador. A tela de equipamento pode ser aberta pelo fluxo de treino quando houver informação real de ocupação. Não foi criado um destino fictício para Meus Treinos.
+
+Roteiro: conferir textos e seis linhas do resumo; testar o retorno; alternar as quatro abas e girar a tela para conferir a seleção; tocar no player e nos controles de reorganização/alternativas para conferir os avisos; testar Manter a ordem e Voltar. Conferir os três XMLs em Design/Split, tela pequena, paisagem e fonte ampliada. Não houve validação visual ou execução em dispositivo nesta implementação e nenhum emulador foi iniciado automaticamente.
+
+Validação das três novas telas: `:app:assembleDebug` passou offline. O parser XML e as verificações estáticas de IDs, registro das Activities e launcher passaram. O aviso existente de SDK 37 acima do suporte testado do AGP permanece; não foram alteradas versões ou dependências.
