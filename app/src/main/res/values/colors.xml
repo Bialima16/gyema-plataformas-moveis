@@ -2,4 +2,10 @@
     <color name="primary">#174A7E</color>
     <color name="background">#FFFFFF</color>
     <color name="text_primary">#202124</color>
+    <color name="auth_navy">#090D29</color>
+    <color name="auth_orange">#FF761A</color>
+    <color name="auth_purple">#393153</color>
+    <color name="auth_field">#211C48</color>
+    <color name="auth_white">#FFFFFF</color>
+    <color name="auth_muted">#D0CBDF</color>
 </resources>

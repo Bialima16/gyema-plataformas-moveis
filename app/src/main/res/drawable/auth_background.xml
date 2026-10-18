@@ -1,0 +1,4 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="360dp" android:height="800dp" android:viewportWidth="360" android:viewportHeight="800">
+<path android:fillColor="@color/auth_navy" android:pathData="M0,0H360V800H0Z"/>
+<path android:strokeColor="#20264F" android:strokeWidth="1" android:pathData="M0,25L65,65L0,110 M0,42L42,67L0,92 M310,0L360,35L320,65L280,35Z M320,210L360,185 M320,210L360,240 M0,440L40,468L0,498 M0,455L20,468L0,482 M300,740L345,710L390,740L345,770Z"/>
+</vector>

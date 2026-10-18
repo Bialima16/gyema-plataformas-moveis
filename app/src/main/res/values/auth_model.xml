@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <color name="model_muted">#C4BED9</color>
+    <color name="model_orange_text">#F4A16D</color>
+    <color name="model_white">#F3F1FA</color>
+    <color name="model_orange">#D74700</color>
+    <color name="model_purple">#24213E</color>
+    <string name="model_academy">ACADEMIA UNIFOR</string>
+    <string name="model_back">Voltar para boas-vindas</string>
+    <string name="model_brand">GYEMA</string>
+    <string name="model_brand_description">SÃ­mbolo Gyema</string>
+    <string name="model_demo_open">Explorar demonstraÃ§Ã£o</string>
+    <string name="model_description">Rotina adaptada ao objetivo. Treinos\npersonalizados.</string>
+    <string name="model_email_hint">Digite seu e-mail</string>
+    <string name="model_email_label">Email</string>
+    <string name="model_forgot_password">
+        <u>Esqueceu sua senha?</u>
+    </string>
+    <string name="model_login">Entrar em sua conta</string>
+    <string name="model_login_description">Acesse com seu email institucional ou\ncadastrado.</string>
+    <string name="model_login_welcome">Ã‰ BOM TE TER DE VOLTA !</string>
+    <string name="model_no_account">NÃ£o tem uma conta? <u>
+            <font color="#F4A16D">Cadastre-se</font>
+        </u>
+    </string>
+    <string name="model_password_hint">Digite sua senha</string>
+    <string name="model_password_label">Senha</string>
+    <string name="model_privacy">Privacidade</string>
+    <string name="model_recovery_description">Digite o e-mail cadastrado na sua conta institucional ou pessoal para receber o link de redefiniÃ§Ã£o de acesso.</string>
+    <string name="model_recovery_email_hint">Digite seu e-mail cadastrado</string>
+    <string name="model_recovery_title">RECUPERAR SENHA</string>
+    <string name="model_register">Primeiro acesso? Cadastre-se</string>
+    <string name="model_remember_user">Lembrar identificaÃ§Ã£o de usuÃ¡rio</string>
+    <string name="model_request_recovery">Solicitar redefiniÃ§Ã£o</string>
+    <string name="model_show_password">Mostrar senha</string>
+    <string name="model_support">Suporte TI</string>
+    <string name="model_tagline">A sua evoluÃ§Ã£o ao\nmais alto nÃ­vel</string>
+    <string name="model_terms">Termos de uso</string>
+    <string name="model_training">TREINOS</string>
+    <string name="model_welcome">SEJA BEM-VINDO!</string>
+    <style name="model_TextAppearance_Gyema" parent="">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/model_white</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+    <style name="model_WelcomeFooter" parent="android:style/Widget.Material.Button.Borderless">
+        <item name="android:textAppearance">@style/model_TextAppearance_Gyema</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingRight">8dp</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/model_orange_text</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+    <color name="model_overlay">#B3080620</color>
+    <style name="model_Widget_Gyema_TextView" parent="android:style/Widget.TextView">
+        <item name="android:textAppearance">@style/model_TextAppearance_Gyema</item>
+    </style>
+    <style name="model_Widget_Gyema_Button" parent="android:style/Widget.Material.Button">
+        <item name="android:textAppearance">@style/model_TextAppearance_Gyema</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+    <color name="model_color_120c09">#120C09</color>
+    <color name="model_color_9c8bbb">#9C8BBB</color>
+    <color name="model_color_ada0ba">#ADA0BA</color>
+    <color name="model_color_b3a9cd">#B3A9CD</color>
+</resources>
