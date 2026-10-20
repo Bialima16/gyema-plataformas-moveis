@@ -14,22 +14,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import br.com.gyema.ui.components.GyemaBottomBar
 import br.com.gyema.ui.navegacao.Tela
-import br.com.gyema.ui.telas.TelaEvolucao
-import br.com.gyema.ui.telas.TelaPerfil
-import br.com.gyema.ui.telas.TelaPrincipal
+import br.com.gyema.ui.telas.TelaAcademiaAgora
+import br.com.gyema.ui.telas.TelaDetalhesTreino
+import br.com.gyema.ui.telas.TelaEquipamentos
+import br.com.gyema.ui.telas.TelaExecucao
+import br.com.gyema.ui.telas.TelaMapaAcademia
+import br.com.gyema.ui.telas.TelaMeusTreinos
 import br.com.gyema.ui.tema.Fundo
 import br.com.gyema.ui.tema.GyemaTheme
-import br.com.gyema.ui.telas.TelaComunidade
-import br.com.gyema.ui.telas.TelaEmUtilizacao
-import br.com.gyema.ui.telas.TelaPublicacao
-import androidx.compose.material3.Button
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,13 +45,19 @@ fun GyemaApp() {
     val nav = rememberNavController()
     val entrada by nav.currentBackStackEntryAsState()
     val rota = entrada?.destination?.route
-    val mostrarBarra = Tela.abas.any { it.rota == rota }
+
+    // Mapa e Equipamentos pertencem à aba Academia
+    val rotaDaAba = when (rota) {
+        Tela.MapaAcademia.rota, Tela.Equipamentos.rota -> Tela.Academia.rota
+        else -> rota
+    }
+    val mostrarBarra = Tela.abas.any { it.rota == rotaDaAba }
 
     Scaffold(
         containerColor = Fundo,
         bottomBar = {
             if (mostrarBarra) {
-                GyemaBottomBar(rota) { tela ->
+                GyemaBottomBar(rotaDaAba) { tela ->
                     nav.navigate(tela.rota) {
                         popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
@@ -62,30 +67,34 @@ fun GyemaApp() {
             }
         }
     ) { padding ->
-        NavHost(nav, startDestination = Tela.Inicio.rota, modifier = Modifier.padding(padding)) {
-            composable(Tela.Inicio.rota) {
-                TelaPrincipal(onMeuTreino = { nav.navigate(Tela.Evolucao.rota) })
+        NavHost(nav, startDestination = Tela.Treinos.rota, modifier = Modifier.padding(padding)) {
+            composable(Tela.Treinos.rota) {
+                TelaMeusTreinos(onAbrirTreino = { nav.navigate(Tela.DetalhesTreino.rota) })
             }
-            composable(Tela.Perfil.rota) { TelaPerfil() }
-            composable(Tela.Evolucao.rota) { TelaEvolucao(onVoltar = { nav.popBackStack() }) }
-            composable(Tela.Comunidade.rota) {
-                TelaComunidade(onAbrirPost = { nav.navigate(Tela.Publicacao.rota) })
-            }
-            composable(Tela.Publicacao.rota) { TelaPublicacao(onVoltar = { nav.popBackStack() }) }
-            composable(Tela.EmUtilizacao.rota) {
-                TelaEmUtilizacao(
+            composable(Tela.DetalhesTreino.rota) {
+                TelaDetalhesTreino(
                     onVoltar = { nav.popBackStack() },
-                    onFinalizar = { nav.popBackStack() }
+                    onIniciar = { nav.navigate(Tela.Execucao.rota) }
                 )
             }
-            composable(Tela.Treinos.rota) {
-                Box(Modifier.fillMaxSize().background(Fundo), contentAlignment = Alignment.Center) {
-                    Button(onClick = { nav.navigate(Tela.EmUtilizacao.rota) }) {
-                        Text("Abrir Em utilização (teste)")
-                    }
-                }
+            composable(Tela.Execucao.rota) {
+                TelaExecucao(onVoltar = { nav.popBackStack() })
             }
-            composable(Tela.Academia.rota) { EmBreve(Tela.Academia.titulo) }
+            composable(Tela.Academia.rota) {
+                TelaAcademiaAgora(onAbrirMapa = { nav.navigate(Tela.MapaAcademia.rota) })
+            }
+            composable(Tela.MapaAcademia.rota) {
+                TelaMapaAcademia(
+                    onVoltar = { nav.popBackStack() },
+                    onAbrirZona = { nav.navigate(Tela.Equipamentos.rota) }
+                )
+            }
+            composable(Tela.Equipamentos.rota) {
+                TelaEquipamentos(onVoltar = { nav.popBackStack() })
+            }
+            listOf(Tela.Inicio, Tela.Comunidade, Tela.Perfil).forEach { t ->
+                composable(t.rota) { EmBreve(t.titulo) }
+            }
         }
     }
 }
