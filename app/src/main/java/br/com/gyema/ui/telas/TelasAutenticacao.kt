@@ -125,7 +125,7 @@ private fun CampoAutenticacao(valor: String, aoMudar: (String) -> Unit,
 }
 
 @Composable
-fun TelaBoasVindas(onEntrar: () -> Unit) {
+fun TelaBoasVindas(onEntrar: () -> Unit, onCadastrar: () -> Unit = {}, onDemonstracao: () -> Unit = {}) {
     var aviso by remember { mutableStateOf(false) }
     FundoAutenticacao {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -143,7 +143,9 @@ fun TelaBoasVindas(onEntrar: () -> Unit) {
             Spacer(Modifier.height(72.dp))
             BotaoAutenticacao(stringResource(R.string.model_login), onEntrar)
             Spacer(Modifier.height(22.dp))
-            BotaoAutenticacao(stringResource(R.string.model_register), { aviso = true }, true)
+            BotaoAutenticacao(stringResource(R.string.model_register), onCadastrar, true)
+            Spacer(Modifier.height(12.dp))
+            TextButton(onClick = onDemonstracao) { Text("Explorar telas (demonstração)", color = TextoLaranja, fontSize = 12.sp) }
             Spacer(Modifier.height(45.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 listOf(R.string.model_terms, R.string.model_privacy, R.string.model_support).forEach { id ->
@@ -208,7 +210,7 @@ private fun ConteudoLogin(
 }
 
 @Composable
-fun TelaLogin(onVoltar: () -> Unit, onRecuperar: () -> Unit) {
+fun TelaLogin(onVoltar: () -> Unit, onRecuperar: () -> Unit, onCadastrar: () -> Unit = {}) {
     val context = LocalContext.current
     val prefs = remember(context) { context.getSharedPreferences("gyema_identification", Context.MODE_PRIVATE) }
     var email by rememberSaveable { mutableStateOf(prefs.getString("email", "").orEmpty()) }
@@ -236,7 +238,7 @@ fun TelaLogin(onVoltar: () -> Unit, onRecuperar: () -> Unit) {
                     else prefs.edit().remove("email").apply()
                     aviso = R.string.auth_login_pending
                 }
-            }, { aviso = R.string.auth_pending }, onVoltar)
+            }, onCadastrar, onVoltar)
     }
     aviso?.let { id -> AvisoPendente(stringResource(id)) { aviso = null } }
 }
