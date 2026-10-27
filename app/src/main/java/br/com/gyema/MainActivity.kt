@@ -46,6 +46,19 @@ fun GyemaApp() {
             composable(Tela.EquipamentoOcupado.rota) {
                 TelaEquipamentoOcupado(onVoltar = { nav.popBackStack() })
             }
+            composable(Tela.Grupos.rota) {
+                TelaGrupos(onCriar = { nav.navigate(Tela.CriarGrupo.rota) },
+                    onChatbot = { nav.navigate(Tela.Chatbot.rota) })
+            }
+            composable(Tela.CriarGrupo.rota) {
+                TelaCriarGrupo(onVoltar = { nav.popBackStack() })
+            }
+            composable(Tela.CriarGrupoValidacao.rota) {
+                TelaCriarGrupo(onVoltar = { nav.popBackStack() }, iniciarComErro = true)
+            }
+            composable(Tela.Chatbot.rota) {
+                TelaChatbot(onVoltar = { nav.popBackStack() })
+            }
             composable(Tela.ResumoTreino.rota) {
                 TelaResumoTreino(onVoltar = { nav.popBackStack() })
             }
