@@ -6,7 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -28,6 +33,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GyemaApp() {
     val nav = rememberNavController()
+    var mostrarMenuTeste by remember { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val rota = entry?.destination?.route
     val abaAtual = when (rota) {
@@ -35,6 +41,12 @@ fun GyemaApp() {
         else -> rota
     }
     Scaffold(containerColor = Fundo,
+        floatingActionButton = {
+            if (Tela.abas.any { it.rota == abaAtual }) {
+                SmallFloatingActionButton(onClick = { mostrarMenuTeste = true },
+                    containerColor = Laranja) { Text("☰", color = Color.White) }
+            }
+        },
         bottomBar = {
             if (Tela.abas.any { it.rota == abaAtual }) {
                 GyemaBottomBar(abaAtual) { tela ->
@@ -50,11 +62,14 @@ fun GyemaApp() {
         NavHost(navController = nav, startDestination = Tela.BoasVindas.rota,
             modifier = Modifier.fillMaxSize().padding(padding)) {
             composable(Tela.BoasVindas.rota) {
-                TelaBoasVindas(onEntrar = { nav.navigate(Tela.Login.rota) })
+                TelaBoasVindas(onEntrar = { nav.navigate(Tela.Login.rota) },
+                    onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) },
+                    onDemonstracao = { nav.navigate(Tela.Inicio.rota) })
             }
             composable(Tela.Login.rota) {
                 TelaLogin(onVoltar = { nav.popBackStack() },
-                    onRecuperar = { nav.navigate(Tela.Recuperacao.rota) })
+                    onRecuperar = { nav.navigate(Tela.Recuperacao.rota) },
+                    onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) })
             }
             composable(Tela.Recuperacao.rota) {
                 TelaRecuperacao(onVoltar = { nav.popBackStack() })
@@ -144,6 +159,28 @@ fun GyemaApp() {
             composable(Tela.Chatbot.rota) {
                 TelaChatbot(onVoltar = { nav.popBackStack() })
             }
+        }
+        if (mostrarMenuTeste) {
+            val atalhos = listOf(Tela.Grupos, Tela.Chatbot, Tela.DetalhesExercicio,
+                Tela.EquipamentoOcupado, Tela.ResumoTreino, Tela.EmUtilizacao,
+                Tela.RegistroUtilizacao, Tela.ReportarProblema, Tela.Evolucao,
+                Tela.CadastroPasso1)
+            AlertDialog(onDismissRequest = { mostrarMenuTeste = false },
+                title = { Text("Navegação de teste") },
+                text = {
+                    Column(Modifier.heightIn(max = androidx.compose.ui.unit.Dp(420f))
+                        .verticalScroll(rememberScrollState())) {
+                        atalhos.forEach { tela ->
+                            TextButton(onClick = {
+                                mostrarMenuTeste = false
+                                nav.navigate(tela.rota)
+                            }) { Text(tela.titulo) }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { mostrarMenuTeste = false }) { Text("Fechar") }
+                })
         }
     }
 }
