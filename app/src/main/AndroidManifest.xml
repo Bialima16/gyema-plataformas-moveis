@@ -1,27 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application
-        android:allowBackup="false"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Gyema">
-        <activity
-            android:name=".WelcomeActivity"
-            android:theme="@style/Theme.Gyema.Auth"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="true">
+    <application android:allowBackup="false" android:label="@string/app_name"
+        android:supportsRtl="true" android:theme="@style/Theme.Gyema">
+        <activity android:name=".MainActivity" android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" android:exported="false" />
-        <activity android:name=".LoginActivity" android:exported="false"
-            android:theme="@style/Theme.Gyema.Auth" android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".PasswordRecoveryActivity" android:exported="false"
-            android:theme="@style/Theme.Gyema.Auth" android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".WorkoutSummaryActivity" android:exported="false" android:theme="@style/Theme.Gyema.Workout" />
-        <activity android:name=".ExerciseDetailsActivity" android:exported="false" android:theme="@style/Theme.Gyema.Workout" />
-        <activity android:name=".EquipmentOccupiedActivity" android:exported="false" android:theme="@style/Theme.Gyema.Workout" />
     </application>
 </manifest>
