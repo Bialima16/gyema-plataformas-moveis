@@ -14,6 +14,11 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object EmUtilizacao : Tela("em_utilizacao", "Em utilização", Icons.Outlined.Timer)
     object Publicacao : Tela("publicacao", "Publicação", Icons.Outlined.Forum)
 
+    object GerenciarEquipamentos : Tela("gerenciar_equipamentos", "Equipamentos", Icons.Outlined.Build)
+    object GerenciarEquipamentosCarregando : Tela("gerenciar_equipamentos_carregando", "Equipamentos (Carregando)", Icons.Outlined.HourglassEmpty)
+    object CadastrarEquipamento : Tela("cadastrar_equipamento", "Cadastrar Equipamento", Icons.Outlined.Add)
+    object NovaFichaTreino : Tela("nova_ficha_treino", "Nova Ficha", Icons.Outlined.NoteAdd)
+
     companion object {
         val abas get() = listOf(Inicio, Treinos, Academia, Comunidade, Perfil)
     }
