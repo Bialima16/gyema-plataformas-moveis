@@ -34,6 +34,12 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object MapaAcademia : Tela("mapa_academia", "Mapa da academia", Icons.Outlined.Map)
     object Equipamentos : Tela("equipamentos", "Equipamentos", Icons.Outlined.Construction)
 
+    // Rotas para o fluxo do Instrutor
+    object GerenciarEquipamentos : Tela("gerenciar_equipamentos", "Gerenciar Equipamentos (Instrutor)", Icons.Outlined.Build)
+    object GerenciarEquipamentosCarregando : Tela("gerenciar_equip_carregando", "Equipamentos (Carregando) (Instrutor)", Icons.Outlined.HourglassEmpty)
+    object CadastrarEquipamento : Tela("cadastrar_equipamento", "Cadastrar Equipamento (Instrutor)", Icons.Outlined.Add)
+    object NovaFichaTreino : Tela("nova_ficha_treino", "Nova Ficha de Treino (Instrutor)", Icons.Outlined.NoteAdd)
+
     companion object {
         val abas get() = listOf(Inicio, Treinos, Academia, Comunidade, Perfil)
     }

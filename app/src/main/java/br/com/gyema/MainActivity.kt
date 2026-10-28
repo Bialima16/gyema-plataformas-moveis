@@ -12,9 +12,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import br.com.gyema.ui.components.GyemaBottomBar
@@ -37,9 +37,10 @@ fun GyemaApp() {
     val entry by nav.currentBackStackEntryAsState()
     val rota = entry?.destination?.route
     val abaAtual = when (rota) {
-        Tela.MapaAcademia.rota, Tela.Equipamentos.rota -> Tela.Academia.rota
+        Tela.MapaAcademia.rota, Tela.Equipamentos.rota, Tela.GerenciarEquipamentos.rota -> Tela.Academia.rota
         else -> rota
     }
+
     Scaffold(containerColor = Fundo,
         floatingActionButton = {
             if (Tela.abas.any { it.rota == abaAtual }) {
@@ -66,11 +67,16 @@ fun GyemaApp() {
                     onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) },
                     onDemonstracao = { nav.navigate(Tela.Inicio.rota) })
             }
+
+            // Fluxo de Login com suporte a redirecionamento de Instrutor
             composable(Tela.Login.rota) {
-                TelaLogin(onVoltar = { nav.popBackStack() },
+                TelaLogin(
+                    onVoltar = { nav.popBackStack() },
                     onRecuperar = { nav.navigate(Tela.Recuperacao.rota) },
-                    onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) })
+                    onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) }
+                )
             }
+
             composable(Tela.Recuperacao.rota) {
                 TelaRecuperacao(onVoltar = { nav.popBackStack() })
             }
@@ -159,16 +165,55 @@ fun GyemaApp() {
             composable(Tela.Chatbot.rota) {
                 TelaChatbot(onVoltar = { nav.popBackStack() })
             }
+
+            // ==========================================
+            // TELAS DO INSTRUTOR
+            // ==========================================
+            composable(Tela.GerenciarEquipamentos.rota) {
+                TelaGerenciarEquipamentos(
+                    isLoadingInicial = false,
+                    onBackClick = { nav.popBackStack() },
+                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.rota) }
+                )
+            }
+            composable(Tela.GerenciarEquipamentosCarregando.rota) {
+                TelaGerenciarEquipamentos(
+                    isLoadingInicial = true,
+                    onBackClick = { nav.popBackStack() },
+                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.rota) }
+                )
+            }
+            composable(Tela.CadastrarEquipamento.rota) {
+                TelaCadastrarEquipamento(
+                    onBackClick = { nav.popBackStack() },
+                    onSaveClick = { nav.popBackStack() }
+                )
+            }
+            composable(Tela.NovaFichaTreino.rota) {
+                TelaNovaFichaTreino(
+                    onBackClick = { nav.popBackStack() },
+                    onSaveClick = { nav.popBackStack() }
+                )
+            }
         }
+
         if (mostrarMenuTeste) {
-            val atalhos = listOf(Tela.Grupos, Tela.Chatbot, Tela.DetalhesExercicio,
+            val atalhos = listOf(
+                // Telas do Instrutor no topo para acesso rápido
+                Tela.GerenciarEquipamentos,
+                Tela.GerenciarEquipamentosCarregando,
+                Tela.CadastrarEquipamento,
+                Tela.NovaFichaTreino,
+                // Restantes telas de aluno
+                Tela.Grupos, Tela.Chatbot, Tela.DetalhesExercicio,
                 Tela.EquipamentoOcupado, Tela.ResumoTreino, Tela.EmUtilizacao,
                 Tela.RegistroUtilizacao, Tela.ReportarProblema, Tela.Evolucao,
-                Tela.CadastroPasso1)
+                Tela.CadastroPasso1
+            )
             AlertDialog(onDismissRequest = { mostrarMenuTeste = false },
-                title = { Text("Navegação de teste") },
+                title = { Text("Navegação de teste (Instrutor/Aluno)") },
                 text = {
-                    Column(Modifier.heightIn(max = androidx.compose.ui.unit.Dp(420f))
+                    Column(Modifier.heightIn(max = Dp(420f))
                         .verticalScroll(rememberScrollState())) {
                         atalhos.forEach { tela ->
                             TextButton(onClick = {
