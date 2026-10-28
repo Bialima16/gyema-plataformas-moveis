@@ -195,6 +195,23 @@ fun GyemaApp() {
                     onSaveClick = { nav.popBackStack() }
                 )
             }
+            composable(Tela.GerenciarEquipamentosVazio.rota) {
+                TelaGerenciarEquipamentosVazio(
+                    onBackClick = { nav.popBackStack() },
+                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.rota) }
+                )
+            }
+            composable(Tela.GerenciarEquipamentosErro.rota) {
+                TelaGerenciarEquipamentosErro(
+                    onBackClick = { nav.popBackStack() },
+                    onTentarNovamente = { nav.popBackStack() }
+                )
+            }
+            composable(Tela.RelatosProblemas.rota) {
+                TelaRelatosProblemas(
+                    onBackClick = { nav.popBackStack() }
+                )
+            }
         }
 
         if (mostrarMenuTeste) {
@@ -202,6 +219,9 @@ fun GyemaApp() {
                 // Telas do Instrutor no topo para acesso rápido
                 Tela.GerenciarEquipamentos,
                 Tela.GerenciarEquipamentosCarregando,
+                Tela.GerenciarEquipamentosVazio,
+                Tela.GerenciarEquipamentosErro,
+                Tela.RelatosProblemas,
                 Tela.CadastrarEquipamento,
                 Tela.NovaFichaTreino,
                 // Restantes telas de aluno
