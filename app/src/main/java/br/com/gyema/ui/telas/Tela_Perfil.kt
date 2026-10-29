@@ -40,7 +40,7 @@ private val itensMenu = listOf(
 )
 
 @Composable
-fun TelaPerfil() {
+fun TelaPerfil(onSair: () -> Unit = {}, onSuporte: () -> Unit = {}, onNotificacoes: () -> Unit = {}) {
     var abaSelecionada by remember { mutableIntStateOf(0) }
 
     Column(
@@ -127,7 +127,13 @@ fun TelaPerfil() {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .clickable { }
+                            .clickable {
+                                when (item.titulo) {
+                                    "Sair da conta" -> onSair()
+                                    "Ajuda e suporte", "Acessibilidade" -> onSuporte()
+                                    "Notificações" -> onNotificacoes()
+                                }
+                            }
                             .padding(horizontal = 16.dp, vertical = 15.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
