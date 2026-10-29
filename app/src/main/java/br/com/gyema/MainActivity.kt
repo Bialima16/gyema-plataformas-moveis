@@ -98,7 +98,14 @@ fun GyemaApp() {
                     onAvancar = { nav.navigate(Tela.Inicio.rota) })
             }
             composable(Tela.Inicio.rota) {
-                TelaPrincipal(onMeuTreino = { nav.navigate(Tela.Treinos.rota) })
+                TelaPrincipal(
+                    onMeuTreino = { nav.navigate(Tela.Treinos.rota) },
+                    onAcademia = { nav.navigate(Tela.Academia.rota) },
+                    onComunidade = { nav.navigate(Tela.Comunidade.rota) },
+                    onChatbot = { nav.navigate(Tela.Chatbot.rota) },
+                    onSugestoes = { nav.navigate(Tela.ReportarProblema.rota) },
+                    onNotificacoes = { nav.navigate(Tela.Comunidade.rota) }
+                )
             }
             composable(Tela.Treinos.rota) {
                 TelaMeusTreinos(onAbrirTreino = { nav.navigate(Tela.DetalhesTreino.rota) })
@@ -236,7 +243,7 @@ fun GyemaApp() {
                     onFichasTreinoClick = { nav.navigate(Tela.NovaFichaTreino.rota) },
                     onEquipamentosClick = { nav.navigate(Tela.GerenciarEquipamentos.rota) },
                     onRelatosProblemasClick = { nav.navigate(Tela.RelatosProblemas.rota) },
-                    onNotificacoesClick = { }
+                    onNotificacoesClick = { nav.navigate(Tela.RelatosProblemas.rota) }
                 )
             }
             composable(Tela.ListaAlunos.rota) {
