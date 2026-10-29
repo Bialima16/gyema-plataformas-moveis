@@ -40,7 +40,14 @@ private val semana = listOf(
 )
 
 @Composable
-fun TelaPrincipal(onMeuTreino: () -> Unit = {}) {
+fun TelaPrincipal(
+    onMeuTreino: () -> Unit = {},
+    onAcademia: () -> Unit = {},
+    onComunidade: () -> Unit = {},
+    onChatbot: () -> Unit = {},
+    onSugestoes: () -> Unit = {},
+    onNotificacoes: () -> Unit = {}
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -49,7 +56,7 @@ fun TelaPrincipal(onMeuTreino: () -> Unit = {}) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Cabecalho()
+        Cabecalho(onNotificacoes)
 
         Column {
             Text("Olá, João! 👋", fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -62,12 +69,12 @@ fun TelaPrincipal(onMeuTreino: () -> Unit = {}) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Atalho("Meu treino", Icons.Outlined.FitnessCenter, Modifier.weight(1f), onMeuTreino)
-                Atalho("Academia", Icons.Outlined.LocationOn, Modifier.weight(1f))
-                Atalho("Comunidade", Icons.Outlined.Groups, Modifier.weight(1f))
+                Atalho("Academia", Icons.Outlined.LocationOn, Modifier.weight(1f), onAcademia)
+                Atalho("Comunidade", Icons.Outlined.Groups, Modifier.weight(1f), onComunidade)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AtalhoLinha("Chatbot", Icons.Outlined.ChatBubbleOutline, Modifier.weight(1f))
-                AtalhoLinha("Sugestões", Icons.Outlined.ThumbUp, Modifier.weight(1f))
+                AtalhoLinha("Chatbot", Icons.Outlined.ChatBubbleOutline, Modifier.weight(1f), onChatbot)
+                AtalhoLinha("Sugestões", Icons.Outlined.ThumbUp, Modifier.weight(1f), onSugestoes)
             }
         }
 
@@ -92,7 +99,7 @@ fun TelaPrincipal(onMeuTreino: () -> Unit = {}) {
 }
 
 @Composable
-private fun Cabecalho() {
+private fun Cabecalho(onNotificacoes: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             // Troque por Image(painterResource(R.drawable.logo), ...) se tiver o logo
@@ -103,7 +110,7 @@ private fun Cabecalho() {
             Spacer(Modifier.width(8.dp))
             Text("GYEMA", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
         }
-        CardGyema(shape = RoundedCornerShape(10.dp)) {
+        CardGyema(shape = RoundedCornerShape(10.dp), onClick = onNotificacoes) {
             Icon(
                 Icons.Outlined.Notifications, "Notificações",
                 tint = TextoSecundario,
@@ -164,8 +171,8 @@ private fun Atalho(titulo: String, icone: ImageVector, modifier: Modifier, onCli
 }
 
 @Composable
-private fun AtalhoLinha(titulo: String, icone: ImageVector, modifier: Modifier) {
-    CardGyema(modifier, onClick = {}) {
+private fun AtalhoLinha(titulo: String, icone: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+    CardGyema(modifier, onClick = onClick) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
