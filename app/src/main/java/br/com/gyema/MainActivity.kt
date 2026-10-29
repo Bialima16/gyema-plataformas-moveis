@@ -125,7 +125,15 @@ fun GyemaApp() {
                     onAbrirZona = { nav.navigate(Tela.Equipamentos.rota) })
             }
             composable(Tela.Equipamentos.rota) {
-                TelaEquipamentos(onVoltar = { nav.popBackStack() })
+                TelaEquipamentos(onVoltar = { nav.popBackStack() },
+                    onDetalhesEquipamento = { nav.navigate(Tela.DetalhesEquipamento.rota) })
+            }
+            composable(Tela.DetalhesEquipamento.rota) {
+                TelaDetalhesEquipamento(
+                    onVoltar = { nav.popBackStack() },
+                    onIniciarUso = { nav.navigate(Tela.RegistroUtilizacao.rota) },
+                    onReportarProblema = { nav.navigate(Tela.ReportarProblema.rota) }
+                )
             }
             composable(Tela.Comunidade.rota) {
                 TelaComunidade(onAbrirPost = { nav.navigate(Tela.Publicacao.rota) })
