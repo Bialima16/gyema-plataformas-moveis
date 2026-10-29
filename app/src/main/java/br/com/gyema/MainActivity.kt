@@ -33,7 +33,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GyemaApp() {
     val nav = rememberNavController()
-    var mostrarMenuTeste by remember { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val rota = entry?.destination?.route
     val abaAtual = when (rota) {
@@ -42,12 +41,6 @@ fun GyemaApp() {
     }
 
     Scaffold(containerColor = Fundo,
-        floatingActionButton = {
-            if (Tela.abas.any { it.rota == abaAtual }) {
-                SmallFloatingActionButton(onClick = { mostrarMenuTeste = true },
-                    containerColor = Laranja) { Text("☰", color = Color.White) }
-            }
-        },
         bottomBar = {
             if (Tela.abas.any { it.rota == abaAtual }) {
                 GyemaBottomBar(abaAtual) { tela ->
@@ -264,41 +257,5 @@ fun GyemaApp() {
             }
         }
 
-        if (mostrarMenuTeste) {
-            val atalhos = listOf(
-                // Telas do Instrutor no topo para acesso rápido
-                Tela.PainelInstrutor,
-                Tela.ListaAlunos,
-                Tela.DetalhesAluno,
-                Tela.GerenciarEquipamentos,
-                Tela.GerenciarEquipamentosCarregando,
-                Tela.GerenciarEquipamentosVazio,
-                Tela.GerenciarEquipamentosErro,
-                Tela.RelatosProblemas,
-                Tela.CadastrarEquipamento,
-                Tela.NovaFichaTreino,
-                // Restantes telas de aluno
-                Tela.Grupos, Tela.Chatbot, Tela.AcessibilidadeSuporte, Tela.DetalhesExercicio,
-                Tela.EquipamentoOcupado, Tela.ResumoTreino, Tela.EmUtilizacao,
-                Tela.RegistroUtilizacao, Tela.ReportarProblema, Tela.Evolucao,
-                Tela.CadastroPasso1
-            )
-            AlertDialog(onDismissRequest = { mostrarMenuTeste = false },
-                title = { Text("Navegação de teste (Instrutor/Aluno)") },
-                text = {
-                    Column(Modifier.heightIn(max = Dp(420f))
-                        .verticalScroll(rememberScrollState())) {
-                        atalhos.forEach { tela ->
-                            TextButton(onClick = {
-                                mostrarMenuTeste = false
-                                nav.navigate(tela.rota)
-                            }) { Text(tela.titulo) }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { mostrarMenuTeste = false }) { Text("Fechar") }
-                })
-        }
     }
 }
