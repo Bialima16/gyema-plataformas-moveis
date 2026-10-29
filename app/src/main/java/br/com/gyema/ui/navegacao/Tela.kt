@@ -33,6 +33,7 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object Execucao : Tela("execucao", "Execução", Icons.Outlined.PlayArrow)
     object MapaAcademia : Tela("mapa_academia", "Mapa da academia", Icons.Outlined.Map)
     object Equipamentos : Tela("equipamentos", "Equipamentos", Icons.Outlined.Construction)
+    object DetalhesEquipamento : Tela("detalhes_equipamento", "Detalhes do equipamento", Icons.Outlined.FitnessCenter)
 
     // Rotas para o fluxo do Instrutor
     object GerenciarEquipamentos : Tela("gerenciar_equipamentos", "Gerenciar Equipamentos (Instrutor)", Icons.Outlined.Build)
