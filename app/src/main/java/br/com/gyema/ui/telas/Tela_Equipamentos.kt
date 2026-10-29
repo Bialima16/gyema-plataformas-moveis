@@ -16,6 +16,10 @@ import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +54,8 @@ private val equipamentos = listOf(
 )
 
 @Composable
-fun TelaEquipamentos(onVoltar: () -> Unit = {}, onDetalhesEquipamento: () -> Unit = {}) {
+fun TelaEquipamentos(onVoltar: () -> Unit = {}, onDetalhesEquipamento: () -> Unit = {}, onFinalizarUso: () -> Unit = {}, onLerQrCode: () -> Unit = {}) {
+    var abaSelecionada by remember { mutableIntStateOf(0) }
     Column(
         Modifier
             .fillMaxSize()
@@ -60,23 +65,33 @@ fun TelaEquipamentos(onVoltar: () -> Unit = {}, onDetalhesEquipamento: () -> Uni
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         CabecalhoAcademia("Equipamentos", onVoltar) {
-            CardGyema(Modifier.size(36.dp), shape = RoundedCornerShape(10.dp)) {
+            CardGyema(Modifier.size(36.dp), shape = RoundedCornerShape(10.dp), onClick = onLerQrCode) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Icon(Icons.Outlined.QrCode2, "Ler QR Code", tint = Laranja, modifier = Modifier.size(20.dp))
                 }
             }
         }
 
-        AbasSegmentadas(listOf("Todos", "Disponíveis", "Ocupados"), selecionado = 0)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Todos", "Disponíveis", "Ocupados").forEachIndexed { index, titulo ->
+                androidx.compose.material3.FilterChip(
+                    selected = abaSelecionada == index,
+                    onClick = { abaSelecionada = index },
+                    label = { Text(titulo) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
 
-        UsandoAgoraCard()
+        UsandoAgoraCard(onFinalizarUso)
 
-        equipamentos.forEach { EquipamentoCard(it, onDetalhesEquipamento) }
+        equipamentos.filter { abaSelecionada == 0 || (abaSelecionada == 1 && it.status == StatusAmbiente.Disponivel) || (abaSelecionada == 2 && it.status == StatusAmbiente.Ocupado) }
+            .forEach { EquipamentoCard(it, onDetalhesEquipamento) }
     }
 }
 
 @Composable
-private fun UsandoAgoraCard() {
+private fun UsandoAgoraCard(onFinalizarUso: () -> Unit) {
     val shape = RoundedCornerShape(14.dp)
     Column(
         Modifier
@@ -94,7 +109,7 @@ private fun UsandoAgoraCard() {
             }
             MiniCronometro()
         }
-        BotaoPrincipal("Finalizar utilização", onClick = {}, modifier = Modifier.fillMaxWidth())
+        BotaoPrincipal("Finalizar utilização", onClick = onFinalizarUso, modifier = Modifier.fillMaxWidth())
     }
 }
 
