@@ -242,11 +242,9 @@ fun TelaLogin(
             }, funcionario, { funcionario = it },
             visivel, { visivel = !visivel }, erroEmail, erroSenha,
             onRecuperar, {
-                erroEmail = when {
-                    email.isBlank() -> context.getString(R.string.auth_email_required)
-                    !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> context.getString(R.string.auth_email_invalid)
-                    else -> null
-                }
+                // Acesso demonstrativo: aceita qualquer identificador não vazio.
+                // Não consulta banco de dados nem valida formato ou credenciais.
+                erroEmail = if (email.isBlank()) context.getString(R.string.auth_email_required) else null
                 erroSenha = if (senha.isBlank()) context.getString(R.string.auth_password_required) else null
                 if (erroEmail == null && erroSenha == null) {
                     if (lembrar) prefs.edit().putString("email", email.trim()).apply()
