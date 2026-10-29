@@ -143,7 +143,18 @@ fun GyemaApp() {
             composable(Tela.Publicacao.rota) {
                 TelaPublicacao(onVoltar = { nav.popBackStack() })
             }
-            composable(Tela.Perfil.rota) { TelaPerfil() }
+            composable(Tela.Perfil.rota) {
+                TelaPerfil(
+                    onSair = {
+                        nav.navigate(Tela.BoasVindas.rota) {
+                            popUpTo(nav.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onSuporte = { nav.navigate(Tela.AcessibilidadeSuporte.rota) },
+                    onNotificacoes = { nav.navigate(Tela.Comunidade.rota) }
+                )
+            }
             composable(Tela.Evolucao.rota) {
                 TelaEvolucao(onVoltar = { nav.popBackStack() })
             }
