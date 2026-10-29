@@ -50,7 +50,7 @@ private val equipamentos = listOf(
 )
 
 @Composable
-fun TelaEquipamentos(onVoltar: () -> Unit = {}) {
+fun TelaEquipamentos(onVoltar: () -> Unit = {}, onDetalhesEquipamento: () -> Unit = {}) {
     Column(
         Modifier
             .fillMaxSize()
@@ -71,7 +71,7 @@ fun TelaEquipamentos(onVoltar: () -> Unit = {}) {
 
         UsandoAgoraCard()
 
-        equipamentos.forEach { EquipamentoCard(it) }
+        equipamentos.forEach { EquipamentoCard(it, onDetalhesEquipamento) }
     }
 }
 
@@ -119,8 +119,8 @@ private fun MiniCronometro() {
 }
 
 @Composable
-private fun EquipamentoCard(e: Equipamento) {
-    CardGyema(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+private fun EquipamentoCard(e: Equipamento, onClick: () -> Unit) {
+    CardGyema(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), onClick = onClick) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier
