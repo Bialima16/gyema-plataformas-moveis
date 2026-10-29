@@ -26,8 +26,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import br.com.gyema.R
 import br.com.gyema.ui.components.AvisoPendente
+import br.com.gyema.ui.tema.GyemaTheme
 
 private val FundoAuthCor = Color(0xFF090D29)
 private val LaranjaAuth = Color(0xFFD74700)
@@ -164,6 +166,7 @@ private fun ConteudoLogin(
     email: String, onEmail: (String) -> Unit,
     senha: String, onSenha: (String) -> Unit,
     lembrar: Boolean, onLembrar: (Boolean) -> Unit,
+    funcionario: Boolean, onFuncionario: (Boolean) -> Unit,
     visivel: Boolean, onVisivel: () -> Unit,
     erroEmail: String?, erroSenha: String?,
     onRecuperar: () -> Unit, onEntrar: () -> Unit, onCadastro: () -> Unit,
@@ -201,6 +204,11 @@ private fun ConteudoLogin(
                 colors = CheckboxDefaults.colors(checkedColor = LaranjaAuth))
             Text(stringResource(R.string.model_remember_user), color = TextoMutado, fontSize = 11.sp)
         }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = funcionario, onCheckedChange = onFuncionario,
+                colors = CheckboxDefaults.colors(checkedColor = LaranjaAuth))
+            Text(stringResource(R.string.auth_employee), color = TextoMutado, fontSize = 11.sp)
+        }
         Spacer(Modifier.height(10.dp))
         BotaoAutenticacao(stringResource(R.string.model_login), onEntrar)
         TextButton(onClick = onCadastro) {
@@ -210,12 +218,18 @@ private fun ConteudoLogin(
 }
 
 @Composable
-fun TelaLogin(onVoltar: () -> Unit, onRecuperar: () -> Unit, onCadastrar: () -> Unit = {}) {
+fun TelaLogin(
+    onVoltar: () -> Unit,
+    onRecuperar: () -> Unit,
+    onCadastrar: () -> Unit = {},
+    onLoginSucesso: (isFuncionario: Boolean) -> Unit = {}
+) {
     val context = LocalContext.current
     val prefs = remember(context) { context.getSharedPreferences("gyema_identification", Context.MODE_PRIVATE) }
     var email by rememberSaveable { mutableStateOf(prefs.getString("email", "").orEmpty()) }
     var senha by remember { mutableStateOf("") }
     var lembrar by rememberSaveable { mutableStateOf(prefs.contains("email")) }
+    var funcionario by rememberSaveable { mutableStateOf(false) }
     var visivel by remember { mutableStateOf(false) }
     var erroEmail by remember { mutableStateOf<String?>(null) }
     var erroSenha by remember { mutableStateOf<String?>(null) }
@@ -225,7 +239,8 @@ fun TelaLogin(onVoltar: () -> Unit, onRecuperar: () -> Unit, onCadastrar: () -> 
             senha, { senha = it; erroSenha = null }, lembrar, {
                 lembrar = it
                 if (!it) prefs.edit().remove("email").apply()
-            }, visivel, { visivel = !visivel }, erroEmail, erroSenha,
+            }, funcionario, { funcionario = it },
+            visivel, { visivel = !visivel }, erroEmail, erroSenha,
             onRecuperar, {
                 erroEmail = when {
                     email.isBlank() -> context.getString(R.string.auth_email_required)
@@ -240,7 +255,12 @@ fun TelaLogin(onVoltar: () -> Unit, onRecuperar: () -> Unit, onCadastrar: () -> 
                 }
             }, onCadastrar, onVoltar)
     }
-    aviso?.let { id -> AvisoPendente(stringResource(id)) { aviso = null } }
+    aviso?.let { id ->
+        AvisoPendente(stringResource(id)) {
+            aviso = null
+            onLoginSucesso(funcionario)
+        }
+    }
 }
 
 @Composable
@@ -306,4 +326,12 @@ fun TelaRecuperacao(onVoltar: () -> Unit) {
         }
     }
     if (aviso) AvisoPendente(stringResource(R.string.auth_recovery_pending)) { aviso = false }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 780)
+@Composable
+private fun PreviewTelaLogin() {
+    GyemaTheme {
+        TelaLogin(onVoltar = {}, onRecuperar = {}, onCadastrar = {})
+    }
 }

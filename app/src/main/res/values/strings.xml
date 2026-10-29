@@ -22,6 +22,7 @@
     <string name="auth_hide_password">Ocultar senha</string>
     <string name="auth_forgot">Esqueceu sua senha?</string>
     <string name="auth_remember">Lembrar identificação de usuário</string>
+    <string name="auth_employee">É funcionário? Clique aqui</string>
     <string name="auth_recovery_title">RECUPERAR SENHA</string>
     <string name="auth_recovery_help">Digite o e-mail cadastrado na sua conta institucional ou pessoal para solicitar a redefinição de acesso.</string>
     <string name="auth_recovery_email">E-mail cadastrado</string>

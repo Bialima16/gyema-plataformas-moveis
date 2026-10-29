@@ -42,6 +42,10 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object GerenciarEquipamentosVazio : Tela("gerenc_equip_vazio", "Equipamentos Vazio (Instrutor)", Icons.Outlined.Inbox)
     object GerenciarEquipamentosErro : Tela("gerenc_equip_erro", "Equipamentos Erro (Instrutor)", Icons.Outlined.ErrorOutline)
     object RelatosProblemas : Tela("relatos_problemas", "Relatos de Problemas (Instrutor)", Icons.Outlined.ReportProblem)
+    object PainelInstrutor : Tela("painel_instrutor", "Painel do Instrutor (Instrutor)", Icons.Outlined.Dashboard)
+    object ListaAlunos : Tela("lista_alunos", "Lista de Alunos (Instrutor)", Icons.Outlined.Group)
+    object DetalhesAluno : Tela("detalhes_aluno", "Detalhes do Aluno (Instrutor)", Icons.Outlined.Person)
+    object AcessibilidadeSuporte : Tela("acessibilidade_suporte", "Acessibilidade e Suporte", Icons.Outlined.AccessibilityNew)
 
     companion object {
         val abas get() = listOf(Inicio, Treinos, Academia, Comunidade, Perfil)

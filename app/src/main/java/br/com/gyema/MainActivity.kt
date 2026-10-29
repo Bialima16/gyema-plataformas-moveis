@@ -73,7 +73,18 @@ fun GyemaApp() {
                 TelaLogin(
                     onVoltar = { nav.popBackStack() },
                     onRecuperar = { nav.navigate(Tela.Recuperacao.rota) },
-                    onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) }
+                    onCadastrar = { nav.navigate(Tela.CadastroPasso1.rota) },
+                    onLoginSucesso = { isFuncionario ->
+                        if (isFuncionario) {
+                            nav.navigate(Tela.PainelInstrutor.rota) {
+                                popUpTo(Tela.BoasVindas.rota) { inclusive = true }
+                            }
+                        } else {
+                            nav.navigate(Tela.Inicio.rota) {
+                                popUpTo(Tela.BoasVindas.rota) { inclusive = true }
+                            }
+                        }
+                    }
                 )
             }
 
@@ -212,11 +223,45 @@ fun GyemaApp() {
                     onBackClick = { nav.popBackStack() }
                 )
             }
+            composable(Tela.AcessibilidadeSuporte.rota) {
+                TelaAcessibilidadeSuporte(
+                    onVoltarClick = { nav.popBackStack() },
+                    onFalarSuporteClick = { nav.navigate(Tela.Chatbot.rota) }
+                )
+            }
+            composable(Tela.PainelInstrutor.rota) {
+                TelaPainelInstrutor(
+                    onMeusAlunosClick = { nav.navigate(Tela.ListaAlunos.rota) },
+                    onFichasTreinoClick = { nav.navigate(Tela.NovaFichaTreino.rota) },
+                    onEquipamentosClick = { nav.navigate(Tela.GerenciarEquipamentos.rota) },
+                    onRelatosProblemasClick = { nav.navigate(Tela.RelatosProblemas.rota) },
+                    onNotificacoesClick = { }
+                )
+            }
+            composable(Tela.ListaAlunos.rota) {
+                TelaListaAlunos(
+                    onVoltarClick = { nav.popBackStack() },
+                    onAlunoClick = { alunoId -> nav.navigate(Tela.DetalhesAluno.rota) },
+                    onPainelClick = { nav.navigate(Tela.PainelInstrutor.rota) },
+                    onFichasClick = { nav.navigate(Tela.NovaFichaTreino.rota) },
+                    onEquipamentosClick = { nav.navigate(Tela.GerenciarEquipamentos.rota) }
+                )
+            }
+            composable(Tela.DetalhesAluno.rota) {
+                TelaDetalhesAluno(
+                    onVoltarClick = { nav.popBackStack() },
+                    onFichaPrincipalClick = { nav.navigate(Tela.DetalhesTreino.rota) },
+                    onCriarNovaFichaClick = { nav.navigate(Tela.NovaFichaTreino.rota) }
+                )
+            }
         }
 
         if (mostrarMenuTeste) {
             val atalhos = listOf(
                 // Telas do Instrutor no topo para acesso rápido
+                Tela.PainelInstrutor,
+                Tela.ListaAlunos,
+                Tela.DetalhesAluno,
                 Tela.GerenciarEquipamentos,
                 Tela.GerenciarEquipamentosCarregando,
                 Tela.GerenciarEquipamentosVazio,
@@ -225,7 +270,7 @@ fun GyemaApp() {
                 Tela.CadastrarEquipamento,
                 Tela.NovaFichaTreino,
                 // Restantes telas de aluno
-                Tela.Grupos, Tela.Chatbot, Tela.DetalhesExercicio,
+                Tela.Grupos, Tela.Chatbot, Tela.AcessibilidadeSuporte, Tela.DetalhesExercicio,
                 Tela.EquipamentoOcupado, Tela.ResumoTreino, Tela.EmUtilizacao,
                 Tela.RegistroUtilizacao, Tela.ReportarProblema, Tela.Evolucao,
                 Tela.CadastroPasso1
