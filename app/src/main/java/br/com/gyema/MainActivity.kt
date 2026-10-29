@@ -126,7 +126,9 @@ fun GyemaApp() {
             }
             composable(Tela.Equipamentos.rota) {
                 TelaEquipamentos(onVoltar = { nav.popBackStack() },
-                    onDetalhesEquipamento = { nav.navigate(Tela.DetalhesEquipamento.rota) })
+                    onDetalhesEquipamento = { nav.navigate(Tela.DetalhesEquipamento.rota) },
+                    onFinalizarUso = { nav.navigate(Tela.ResumoTreino.rota) },
+                    onLerQrCode = { nav.navigate(Tela.RegistroUtilizacao.rota) })
             }
             composable(Tela.DetalhesEquipamento.rota) {
                 TelaDetalhesEquipamento(
