@@ -69,3 +69,7 @@ Na integração, a tela Meus Treinos deverá abrir o resumo/detalhes por Intent;
 Roteiro: conferir textos e seis linhas do resumo; testar o retorno; alternar as quatro abas e girar a tela para conferir a seleção; tocar no player e nos controles de reorganização/alternativas para conferir os avisos; testar Manter a ordem e Voltar. Conferir os três XMLs em Design/Split, tela pequena, paisagem e fonte ampliada. Não houve validação visual ou execução em dispositivo nesta implementação e nenhum emulador foi iniciado automaticamente.
 
 Validação das três novas telas: `:app:assembleDebug` passou offline. O parser XML e as verificações estáticas de IDs, registro das Activities e launcher passaram. O aviso existente de SDK 37 acima do suporte testado do AGP permanece; não foram alteradas versões ou dependências.
+
+## Banco de dados (Supabase)
+
+O banco do app fica no Supabase. A conexão está em `app/src/main/java/br/com/gyema/data/SupabaseConfig.kt` (use sempre `Supabase.cliente`). Para conectar o app no seu computador (arquivo `local.properties`), testar a conexão e ver qual tabela cada tela usa, siga o guia em [`supabase/README.md`](supabase/README.md).
