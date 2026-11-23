@@ -218,6 +218,21 @@ prefs.edit().putString("notificacoes_vistas_em", Instant.now().toString()).apply
 
 O diagrama no fim desta página mostra como as tabelas se ligam. Em caso de dúvida sobre uma coluna, veja `01_schema.sql` ou o **Table Editor** do Supabase.
 
+### Telas do instrutor (já ligadas ao banco)
+
+As consultas e gravações ficam em `app/src/main/java/br/com/gyema/data/RepositorioInstrutor.kt`.
+
+| Tela | O que faz no banco |
+|---|---|
+| Painel | Nome do instrutor (`perfis`) e número de relatos com status `aberto` no sino |
+| Lista de alunos | `perfis` com `perfil = aluno`, busca por nome, curso ou matrícula |
+| Detalhes do aluno | Fichas ativas (`fichas_treino` + `itens_ficha`) e treinos dos últimos 30 dias (`execucoes_treino`) |
+| Nova ficha | Grava `fichas_treino` e `itens_ficha`. O `grupo_foco` vem dos grupos musculares dos exercícios escolhidos |
+| Gerenciar / Cadastrar equipamento | Lista `equipamentos_detalhados`; toque num equipamento para editar. Grava `equipamentos` e `equipamento_exercicios` |
+| Relatos de problemas | Lista `relatos_problema`, muda para `em_analise` ou `resolvido` (o aluno recebe a notificação) |
+
+Para testar, entre no app com uma conta promovida a instrutor (seção "Criar um instrutor"). Sem login, as telas avisam que é preciso entrar com uma conta de instrutor.
+
 ## Regras que o próprio banco garante
 
 - Um aluno **não consegue** virar instrutor, ver dados de outro aluno nem editar equipamentos, nem que tente pelo código.

@@ -36,16 +36,24 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object DetalhesEquipamento : Tela("detalhes_equipamento", "Detalhes do equipamento", Icons.Outlined.FitnessCenter)
 
     // Rotas para o fluxo do Instrutor
+    // Rotas com argumento: use as funções criar(...) para montar o caminho ao navegar.
     object GerenciarEquipamentos : Tela("gerenciar_equipamentos", "Gerenciar Equipamentos (Instrutor)", Icons.Outlined.Build)
-    object GerenciarEquipamentosCarregando : Tela("gerenciar_equip_carregando", "Equipamentos (Carregando) (Instrutor)", Icons.Outlined.HourglassEmpty)
-    object CadastrarEquipamento : Tela("cadastrar_equipamento", "Cadastrar Equipamento (Instrutor)", Icons.Outlined.Add)
-    object NovaFichaTreino : Tela("nova_ficha_treino", "Nova Ficha de Treino (Instrutor)", Icons.Outlined.NoteAdd)
-    object GerenciarEquipamentosVazio : Tela("gerenc_equip_vazio", "Equipamentos Vazio (Instrutor)", Icons.Outlined.Inbox)
-    object GerenciarEquipamentosErro : Tela("gerenc_equip_erro", "Equipamentos Erro (Instrutor)", Icons.Outlined.ErrorOutline)
+    object CadastrarEquipamento : Tela("cadastrar_equipamento?equipamentoId={equipamentoId}", "Cadastrar Equipamento (Instrutor)", Icons.Outlined.Add) {
+        /** Sem id abre o cadastro; com id abre a edição. */
+        fun criar(equipamentoId: Int? = null) =
+            if (equipamentoId == null) "cadastrar_equipamento" else "cadastrar_equipamento?equipamentoId=$equipamentoId"
+    }
+    object NovaFichaTreino : Tela("nova_ficha_treino?alunoId={alunoId}", "Nova Ficha de Treino (Instrutor)", Icons.Outlined.NoteAdd) {
+        /** Com alunoId a ficha já abre com o aluno selecionado. */
+        fun criar(alunoId: String? = null) =
+            if (alunoId == null) "nova_ficha_treino" else "nova_ficha_treino?alunoId=$alunoId"
+    }
     object RelatosProblemas : Tela("relatos_problemas", "Relatos de Problemas (Instrutor)", Icons.Outlined.ReportProblem)
     object PainelInstrutor : Tela("painel_instrutor", "Painel do Instrutor (Instrutor)", Icons.Outlined.Dashboard)
     object ListaAlunos : Tela("lista_alunos", "Lista de Alunos (Instrutor)", Icons.Outlined.Group)
-    object DetalhesAluno : Tela("detalhes_aluno", "Detalhes do Aluno (Instrutor)", Icons.Outlined.Person)
+    object DetalhesAluno : Tela("detalhes_aluno/{alunoId}", "Detalhes do Aluno (Instrutor)", Icons.Outlined.Person) {
+        fun criar(alunoId: String) = "detalhes_aluno/$alunoId"
+    }
     object AcessibilidadeSuporte : Tela("acessibilidade_suporte", "Acessibilidade e Suporte", Icons.Outlined.AccessibilityNew)
 
     companion object {

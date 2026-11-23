@@ -31,15 +31,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.gyema.data.Aluno
+import br.com.gyema.data.RepositorioInstrutor
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
 import br.com.gyema.ui.components.CardGyema
+import br.com.gyema.ui.components.EstadoCarregando
+import br.com.gyema.ui.components.EstadoErro
+import br.com.gyema.ui.components.EstadoVazio
+import br.com.gyema.ui.components.iniciais
 import br.com.gyema.ui.tema.*
-
-data class AlunoItem(
-    val id: String,
-    val nome: String,
-    val curso: String,
-    val iniciais: String
-)
 
 @Composable
 fun TelaListaAlunos(
@@ -51,23 +52,24 @@ fun TelaListaAlunos(
     onEquipamentosClick: () -> Unit = {}
 ) {
     var busca by remember { mutableStateOf("") }
+    var alunos by remember { mutableStateOf<List<Aluno>?>(null) }
+    var erro by remember { mutableStateOf<String?>(null) }
+    var tentativa by remember { mutableIntStateOf(0) }
 
-    val listaAlunosMocada = remember {
-        listOf(
-            AlunoItem("1", "João Silva", "Eng. Computação", "JS"),
-            AlunoItem("2", "Maria Santos", "Direito", "MS"),
-            AlunoItem("3", "Carlos Oliveira", "Medicina", "CO"),
-            AlunoItem("4", "Ana Lima", "Educação Física", "AL")
-        )
+    LaunchedEffect(tentativa) {
+        erro = null
+        tentar { RepositorioInstrutor.listarAlunos() }
+            .onSuccess { alunos = it }
+            .onFailure { erro = mensagemDeErro(it) }
     }
 
-    val alunosFiltrados = remember(busca) {
-        if (busca.isEmpty()) {
-            listaAlunosMocada
-        } else {
-            listaAlunosMocada.filter {
-                it.nome.contains(busca, ignoreCase = true) || it.curso.contains(busca, ignoreCase = true)
-            }
+    val alunosFiltrados = remember(busca, alunos) {
+        val termo = busca.trim()
+        alunos.orEmpty().filter {
+            termo.isEmpty() ||
+                it.nome.contains(termo, ignoreCase = true) ||
+                it.curso.orEmpty().contains(termo, ignoreCase = true) ||
+                it.matricula.orEmpty().contains(termo)
         }
     }
 
@@ -148,7 +150,7 @@ fun TelaListaAlunos(
                         decorationBox = { innerTextField ->
                             if (busca.isEmpty()) {
                                 Text(
-                                    text = "Buscar aluno...",
+                                    text = "Buscar por nome, curso ou matrícula...",
                                     color = TextoSecundario,
                                     fontSize = 13.sp
                                 )
@@ -168,15 +170,27 @@ fun TelaListaAlunos(
                 letterSpacing = 0.5.sp
             )
 
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(alunosFiltrados, key = { it.id }) { aluno ->
-                    CardAluno(
-                        aluno = aluno,
-                        onClick = { onAlunoClick(aluno.id) }
-                    )
+            when {
+                erro != null -> EstadoErro(erro!!, onTentarNovamente = { tentativa++ })
+                alunos == null -> EstadoCarregando()
+                alunos!!.isEmpty() -> EstadoVazio(
+                    "Nenhum aluno cadastrado",
+                    "Os alunos aparecem aqui depois de criarem a conta pelo app."
+                )
+                alunosFiltrados.isEmpty() -> EstadoVazio(
+                    "Nenhum aluno encontrado",
+                    "Confira o nome, o curso ou a matrícula digitados."
+                )
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(alunosFiltrados, key = { it.id }) { aluno ->
+                        CardAluno(
+                            aluno = aluno,
+                            onClick = { onAlunoClick(aluno.id) }
+                        )
+                    }
                 }
             }
         }
@@ -193,7 +207,7 @@ fun TelaListaAlunos(
 
 @Composable
 private fun CardAluno(
-    aluno: AlunoItem,
+    aluno: Aluno,
     onClick: () -> Unit
 ) {
     CardGyema(
@@ -216,7 +230,7 @@ private fun CardAluno(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = aluno.iniciais,
+                    text = iniciais(aluno.nome),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -232,7 +246,8 @@ private fun CardAluno(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = aluno.curso,
+                    text = listOfNotNull(aluno.curso, aluno.matricula?.let { "Mat. $it" })
+                        .joinToString(" • ").ifEmpty { "Curso não informado" },
                     fontSize = 12.sp,
                     color = TextoSecundario
                 )

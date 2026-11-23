@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,29 +16,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.gyema.data.EquipamentoLista
+import br.com.gyema.data.RepositorioInstrutor
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
+import br.com.gyema.ui.components.EstadoErro
+import br.com.gyema.ui.components.EstadoVazio
 import br.com.gyema.ui.tema.GyemaTheme
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelaGerenciarEquipamentos(
-    isLoadingInicial: Boolean = false,
     onBackClick: () -> Unit = {},
-    onCadastrarClick: () -> Unit = {}
+    onCadastrarClick: () -> Unit = {},
+    onEquipamentoClick: (equipamentoId: Int) -> Unit = {}
 ) {
-    var abaSelecionada by remember { mutableStateOf(0) } // 0: Todos, 1: Manutenção
+    var abaSelecionada by remember { mutableIntStateOf(0) } // 0: Todos, 1: Manutenção
+    var equipamentos by remember { mutableStateOf<List<EquipamentoLista>?>(null) }
+    var erro by remember { mutableStateOf<String?>(null) }
+    var tentativa by remember { mutableIntStateOf(0) }
 
-    // Estado interno de carregamento que começa com o valor recebido
-    var isLoading by remember { mutableStateOf(isLoadingInicial) }
+    // Recarrega ao abrir e ao voltar do cadastro/edição
+    LaunchedEffect(tentativa) {
+        erro = null
+        tentar { RepositorioInstrutor.listarEquipamentos() }
+            .onSuccess { equipamentos = it }
+            .onFailure { erro = mensagemDeErro(it) }
+    }
 
-    val scrollState = rememberScrollState()
-
-    // Se entrou com o carregamento ativo, simulamos a espera de 2 segundos e destravamos
-    LaunchedEffect(Unit) {
-        if (isLoadingInicial) {
-            delay(2000) // Simula 2 segundos a ir buscar os dados
-            isLoading = false
-        }
+    val lista = equipamentos
+    val visiveis = when {
+        lista == null -> emptyList()
+        abaSelecionada == 1 -> lista.filter { it.status == "manutencao" }
+        else -> lista
     }
 
     Scaffold(
@@ -55,7 +65,7 @@ fun TelaGerenciarEquipamentos(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Voltar",
                             tint = Color.White
                         )
@@ -66,13 +76,36 @@ fun TelaGerenciarEquipamentos(
                 )
             )
         },
-        containerColor = Color(0xFF0B1021)
+        containerColor = Color(0xFF0B1021),
+        bottomBar = {
+            Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Button(
+                    onClick = onCadastrarClick,
+                    enabled = erro == null && lista != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE65100),
+                        disabledContainerColor = Color(0xFF131B31)
+                    ),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        text = "Cadastrar equipamento +",
+                        color = if (erro == null && lista != null) Color.White else Color(0xFF8B93A5),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(paddingValues)
-                .verticalScroll(scrollState)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -98,74 +131,37 @@ fun TelaGerenciarEquipamentos(
                 )
             }
 
-            if (isLoading) {
-                // Estado de Carregamento (Skeletons)
-                CardSkeletonEquipamento()
-                CardSkeletonEquipamento()
-                CardSkeletonEquipamento()
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                        .background(Color(0xFF131B31), shape = MaterialTheme.shapes.medium)
+            when {
+                erro != null -> EstadoErro(
+                    erro!!,
+                    onTentarNovamente = { equipamentos = null; tentativa++ }
                 )
-            } else {
-                // Listagem normal de equipamentos após o carregamento
-                if (abaSelecionada == 0) {
+                lista == null -> repeat(3) { CardSkeletonEquipamento() }
+                visiveis.isEmpty() -> EstadoVazio(
+                    titulo = if (abaSelecionada == 1) "Nenhum equipamento em manutenção"
+                    else "Nenhum equipamento cadastrado",
+                    texto = if (abaSelecionada == 1) "Todos os equipamentos estão funcionando."
+                    else "Toque em \"Cadastrar equipamento\" para adicionar o primeiro."
+                )
+                else -> visiveis.forEach { eq ->
+                    val (texto, cor) = rotuloStatus(eq.status)
                     CardEquipamento(
-                        nome = "Supino Reto",
-                        setor = "Musculação",
-                        status = "DISPONÍVEL",
-                        statusColor = Color(0xFF4CAF50)
-                    )
-                    CardEquipamento(
-                        nome = "Leg Press 45°",
-                        setor = "Musculação",
-                        status = "DISPONÍVEL",
-                        statusColor = Color(0xFF4CAF50)
-                    )
-                    CardEquipamento(
-                        nome = "Esteira 3",
-                        setor = "Cardio",
-                        status = "MANUTENÇÃO",
-                        statusColor = Color(0xFF8B93A5)
-                    )
-                } else {
-                    CardEquipamento(
-                        nome = "Esteira 3",
-                        setor = "Cardio",
-                        status = "MANUTENÇÃO",
-                        statusColor = Color(0xFF8B93A5)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = onCadastrarClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE65100)
-                    ),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(
-                        text = "Cadastrar equipamento +",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        nome = eq.nome,
+                        setor = "${eq.setorNome} • ${eq.codigo}",
+                        status = texto,
+                        statusColor = cor,
+                        onClick = { onEquipamentoClick(eq.id) }
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}
+
+private fun rotuloStatus(status: String): Pair<String, Color> = when (status) {
+    "disponivel" -> "DISPONÍVEL" to Color(0xFF4CAF50)
+    "ocupado" -> "OCUPADO" to Color(0xFFE65100)
+    else -> "MANUTENÇÃO" to Color(0xFF8B93A5)
 }
 
 @Composable
@@ -194,14 +190,17 @@ fun TabBotao(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardEquipamento(
     nome: String,
     setor: String,
     status: String,
-    statusColor: Color
+    statusColor: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF131B31)),
         shape = MaterialTheme.shapes.large
@@ -213,7 +212,10 @@ fun CardEquipamento(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = nome,
                     color = Color.White,
@@ -226,6 +228,7 @@ fun CardEquipamento(
                     fontSize = 13.sp
                 )
             }
+            Spacer(Modifier.width(8.dp))
             Box(
                 modifier = Modifier
                     .background(statusColor.copy(alpha = 0.2f), shape = MaterialTheme.shapes.small)
@@ -284,6 +287,6 @@ fun CardSkeletonEquipamento() {
 @Composable
 fun TelaGerenciarEquipamentosPreview() {
     GyemaTheme {
-        TelaGerenciarEquipamentos(isLoadingInicial = false)
+        TelaGerenciarEquipamentos()
     }
 }
