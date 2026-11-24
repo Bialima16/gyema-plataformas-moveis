@@ -10,49 +10,63 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.gyema.data.Aluno
+import br.com.gyema.data.ExecucaoResumo
+import br.com.gyema.data.FichaResumo
+import br.com.gyema.data.RepositorioInstrutor
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
 import br.com.gyema.ui.components.CardGyema
+import br.com.gyema.ui.components.EstadoCarregando
+import br.com.gyema.ui.components.EstadoErro
+import br.com.gyema.ui.components.formatarData
+import br.com.gyema.ui.components.iniciais
 import br.com.gyema.ui.tema.*
+import java.time.Duration
+import java.time.OffsetDateTime
 
-data class HistoricoTreinoItem(
-    val id: String,
-    val data: String,
-    val titulo: String,
-    val foco: String,
-    val duracao: String,
-    val exercicios: String
+private class DadosAluno(
+    val aluno: Aluno,
+    val fichas: List<FichaResumo>,
+    val execucoes: List<ExecucaoResumo>
 )
 
 @Composable
 fun TelaDetalhesAluno(
+    alunoId: String,
     modifier: Modifier = Modifier,
-    alunoNome: String = "João Silva",
-    alunoCurso: String = "Eng. Computação",
-    alunoIniciais: String = "JS",
     onVoltarClick: () -> Unit = {},
-    onFichaPrincipalClick: () -> Unit = {},
-    onHistoricoItemClick: (historicoId: String) -> Unit = {},
-    onCriarNovaFichaClick: () -> Unit = {}
+    onCriarNovaFichaClick: (alunoId: String) -> Unit = {}
 ) {
-    val historicosMocados = listOf(
-        HistoricoTreinoItem("1", "25/09", "Treino A", "Peito e Tríceps", "45m", "Supino reto, Supino inclinado, Crucifixo..."),
-        HistoricoTreinoItem("2", "23/09", "Treino B", "Costas e Bíceps", "50m", "Puxada frontal, Remada curvada, Rosca direta..."),
-        HistoricoTreinoItem("3", "20/09", "Treino C", "Inferior Completo", "40m", "Agachamento, Leg press, Cadeira extensora...")
-    )
+    var dados by remember { mutableStateOf<DadosAluno?>(null) }
+    var erro by remember { mutableStateOf<String?>(null) }
+    var tentativa by remember { mutableIntStateOf(0) }
+
+    // Também recarrega ao voltar da tela de nova ficha
+    LaunchedEffect(alunoId, tentativa) {
+        erro = null
+        tentar {
+            DadosAluno(
+                aluno = RepositorioInstrutor.buscarAluno(alunoId),
+                fichas = RepositorioInstrutor.fichasDoAluno(alunoId),
+                execucoes = RepositorioInstrutor.execucoesDoAluno(alunoId)
+            )
+        }.onSuccess { dados = it }.onFailure { erro = mensagemDeErro(it) }
+    }
 
     Column(
         modifier = modifier
@@ -96,164 +110,11 @@ fun TelaDetalhesAluno(
                 )
             }
 
-            // card perfil aluno
-            CardGyema(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(SuperficieEscura)
-                            .border(1.dp, Borda, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = alunoIniciais,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column {
-                        Text(
-                            text = alunoNome,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = alunoCurso,
-                            fontSize = 12.sp,
-                            color = TextoSecundario
-                        )
-                    }
-                }
-            }
-
-            // resumo da evolucao
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "RESUMO DA EVOLUÇÃO",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextoSecundario,
-                    letterSpacing = 0.5.sp
-                )
-
-                CardGyema(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        BlocoMetrica(
-                            rotulo = "Frequência",
-                            valor = "12 treinos/mês",
-                            modifier = Modifier.weight(1f)
-                        )
-                        BlocoMetrica(
-                            rotulo = "Tempo total",
-                            valor = "18h treinadas",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
-            // card ficha principal
-            CardGyema(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                onClick = onFichaPrincipalClick
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = "Treino A — Ficha Principal",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Peito e Tríceps",
-                            fontSize = 12.sp,
-                            color = TextoSecundario
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.FitnessCenter,
-                                contentDescription = null,
-                                tint = TextoSecundario,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "6 exercícios",
-                                fontSize = 12.sp,
-                                color = TextoSecundario
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(SuperficieEscura),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = "Abrir ficha",
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            // historico de treinos
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "HISTÓRICO DE TREINOS",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextoSecundario,
-                    letterSpacing = 0.5.sp
-                )
-
-                historicosMocados.forEach { h ->
-                    CardHistoricoTreino(
-                        item = h,
-                        onClick = { onHistoricoItemClick(h.id) }
-                    )
-                }
+            val d = dados
+            when {
+                erro != null -> EstadoErro(erro!!, onTentarNovamente = { tentativa++ })
+                d == null -> EstadoCarregando()
+                else -> ConteudoAluno(d)
             }
         }
 
@@ -267,7 +128,7 @@ fun TelaDetalhesAluno(
                 .height(50.dp)
                 .clip(shapeBotao)
                 .background(Laranja)
-                .clickable(onClick = onCriarNovaFichaClick),
+                .clickable { onCriarNovaFichaClick(alunoId) },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -276,6 +137,164 @@ fun TelaDetalhesAluno(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
+        }
+    }
+}
+
+@Composable
+private fun ConteudoAluno(dados: DadosAluno) {
+    val aluno = dados.aluno
+
+    // card perfil aluno
+    CardGyema(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(SuperficieEscura)
+                    .border(1.dp, Borda, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = iniciais(aluno.nome),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column {
+                Text(
+                    text = aluno.nome,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = listOfNotNull(aluno.curso, aluno.matricula?.let { "Mat. $it" })
+                        .joinToString(" • ").ifEmpty { "Curso não informado" },
+                    fontSize = 12.sp,
+                    color = TextoSecundario
+                )
+            }
+        }
+    }
+
+    // resumo da evolucao (últimos 30 dias)
+    val minutos = dados.execucoes.sumOf { duracaoMinutos(it) ?: 0L }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Rotulo("RESUMO DOS ÚLTIMOS 30 DIAS")
+        CardGyema(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val qtd = dados.execucoes.size
+                BlocoMetrica(
+                    rotulo = "Frequência",
+                    valor = if (qtd == 1) "1 treino" else "$qtd treinos",
+                    modifier = Modifier.weight(1f)
+                )
+                BlocoMetrica(
+                    rotulo = "Tempo total",
+                    valor = formatarDuracao(minutos),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+
+    // fichas ativas
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Rotulo("FICHAS ATIVAS")
+        if (dados.fichas.isEmpty()) {
+            TextoInformativo("Este aluno ainda não tem fichas. Toque em \"Criar nova ficha\".")
+        }
+        dados.fichas.forEach { CardFicha(it) }
+    }
+
+    // historico de treinos
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Rotulo("HISTÓRICO DE TREINOS")
+        if (dados.execucoes.isEmpty()) {
+            TextoInformativo("Nenhum treino registrado nos últimos 30 dias.")
+        }
+        dados.execucoes.take(10).forEach { CardHistoricoTreino(it) }
+    }
+}
+
+@Composable
+private fun Rotulo(texto: String) {
+    Text(
+        text = texto,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextoSecundario,
+        letterSpacing = 0.5.sp
+    )
+}
+
+@Composable
+private fun TextoInformativo(texto: String) {
+    Text(text = texto, fontSize = 12.sp, color = TextoSecundario)
+}
+
+@Composable
+private fun CardFicha(ficha: FichaResumo) {
+    CardGyema(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = ficha.nome,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                ficha.grupoFoco?.let {
+                    Text(text = it, fontSize = 12.sp, color = TextoSecundario)
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.FitnessCenter,
+                    contentDescription = null,
+                    tint = TextoSecundario,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                val qtd = ficha.itens.size
+                Text(
+                    text = (if (qtd == 1) "1 exercício" else "$qtd exercícios") +
+                        if (qtd > 0) ": " + ficha.itens.joinToString(", ") { it.exercicios.nome } else "",
+                    fontSize = 12.sp,
+                    color = TextoSecundario,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -308,14 +327,11 @@ private fun BlocoMetrica(
 }
 
 @Composable
-private fun CardHistoricoTreino(
-    item: HistoricoTreinoItem,
-    onClick: () -> Unit
-) {
+private fun CardHistoricoTreino(execucao: ExecucaoResumo) {
+    val exercicios = execucao.series.map { it.exercicios.nome }.distinct()
     CardGyema(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        onClick = onClick
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(
             modifier = Modifier
@@ -334,7 +350,7 @@ private fun CardHistoricoTreino(
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = item.data,
+                        text = formatarData(execucao.inicio, "dd/MM"),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Laranja
@@ -342,10 +358,14 @@ private fun CardHistoricoTreino(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "${item.titulo} → ${item.foco}",
+                    text = execucao.ficha?.let { f ->
+                        listOfNotNull(f.nome, f.grupoFoco).joinToString(" → ")
+                    } ?: "Treino livre",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -357,41 +377,43 @@ private fun CardHistoricoTreino(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.duracao,
+                        text = duracaoMinutos(execucao)?.let { formatarDuracao(it) } ?: "Em andamento",
                         fontSize = 11.sp,
                         color = TextoSecundario
                     )
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = item.exercicios,
-                    fontSize = 11.sp,
-                    color = TextoSecundario,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Outlined.EditNote,
-                    contentDescription = null,
-                    tint = TextoSecundario,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Text(
+                text = exercicios.joinToString(", ").ifEmpty { "Nenhuma série registrada" },
+                fontSize = 11.sp,
+                color = TextoSecundario,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
 
-// preview da tela
+/** Duração em minutos, ou null se o treino ainda não terminou. */
+private fun duracaoMinutos(execucao: ExecucaoResumo): Long? {
+    val fim = execucao.fim ?: return null
+    return runCatching {
+        Duration.between(OffsetDateTime.parse(execucao.inicio), OffsetDateTime.parse(fim)).toMinutes()
+    }.getOrNull()
+}
+
+private fun formatarDuracao(minutos: Long): String = when {
+    minutos < 60 -> "${minutos}min"
+    minutos % 60 == 0L -> "${minutos / 60}h"
+    else -> "${minutos / 60}h${minutos % 60}min"
+}
+
+// preview da tela (sem banco, mostra o carregamento)
 @Preview(showBackground = true, widthDp = 360, heightDp = 780)
 @Composable
 private fun PreviewTelaDetalhesAluno() {
     GyemaTheme {
-        TelaDetalhesAluno()
+        TelaDetalhesAluno(alunoId = "preview")
     }
 }

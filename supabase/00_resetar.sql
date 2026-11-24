@@ -6,7 +6,7 @@
 
 drop trigger if exists ao_criar_usuario on auth.users;
 
-drop view if exists public.evolucao_carga_mensal, public.feed_posts,
+drop view if exists public.notificacoes, public.evolucao_carga_mensal, public.feed_posts,
     public.equipamentos_detalhados, public.ocupacao_setores, public.perfis_publicos cascade;
 
 drop table if exists public.membros_grupo, public.grupos, public.comentarios,

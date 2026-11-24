@@ -18,7 +18,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.gyema.data.PerfilResumo
+import br.com.gyema.data.RepositorioInstrutor
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
 import br.com.gyema.ui.components.CardGyema
 import br.com.gyema.ui.tema.*
 
@@ -40,6 +44,24 @@ fun TelaPainelInstrutor(
     onRelatosProblemasClick: () -> Unit = {},
     onNotificacoesClick: () -> Unit = {}
 ) {
+    var perfil by remember { mutableStateOf<PerfilResumo?>(null) }
+    var relatosAbertos by remember { mutableIntStateOf(0) }
+    var aviso by remember { mutableStateOf<String?>(null) }
+
+    // Roda de novo sempre que o painel volta a aparecer (ex.: depois de resolver um relato)
+    LaunchedEffect(Unit) {
+        tentar { RepositorioInstrutor.meuPerfil() }
+            .onSuccess {
+                perfil = it
+                aviso = if (it.perfil != "instrutor")
+                    "Esta conta é de aluno. Para usar a área do instrutor, promova a conta no banco (veja supabase/README.md)." else null
+            }
+            .onFailure { aviso = mensagemDeErro(it) }
+        tentar { RepositorioInstrutor.contarRelatosAbertos() }.onSuccess { relatosAbertos = it }
+    }
+
+    val primeiroNome = perfil?.nome?.trim()?.substringBefore(' ').orEmpty()
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -66,7 +88,7 @@ fun TelaPainelInstrutor(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "R",
+                        text = primeiroNome.take(1).uppercase().ifEmpty { "?" },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -75,7 +97,7 @@ fun TelaPainelInstrutor(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Olá, Prof. Ricardo!",
+                        text = if (primeiroNome.isEmpty()) "Olá!" else "Olá, Prof. $primeiroNome!",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -87,19 +109,16 @@ fun TelaPainelInstrutor(
                         color = TextoSecundario
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(SuperficieEscura)
-                        .clickable(onClick = onNotificacoesClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = "Notificações",
-                        tint = TextoSecundario,
-                        modifier = Modifier.size(20.dp)
+                SinoRelatos(quantidade = relatosAbertos, onClick = onNotificacoesClick)
+            }
+
+            aviso?.let { texto ->
+                CardGyema(modifier = Modifier.fillMaxWidth(), fundo = LaranjaEscuro) {
+                    Text(
+                        text = texto,
+                        fontSize = 13.sp,
+                        color = Color.White,
+                        modifier = Modifier.padding(14.dp)
                     )
                 }
             }
@@ -137,7 +156,11 @@ fun TelaPainelInstrutor(
 
                 CardAcessoRapido(
                     titulo = "Relatos de problemas",
-                    subtitulo = "Ver relatos dos alunos",
+                    subtitulo = when (relatosAbertos) {
+                        0 -> "Nenhum relato em aberto"
+                        1 -> "1 relato em aberto"
+                        else -> "$relatosAbertos relatos em aberto"
+                    },
                     icone = Icons.Default.Warning,
                     iconeTint = Color.White,
                     onClick = onRelatosProblemasClick
@@ -156,6 +179,45 @@ fun TelaPainelInstrutor(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun SinoRelatos(quantidade: Int, onClick: () -> Unit) {
+    Box(contentAlignment = Alignment.TopEnd) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(SuperficieEscura)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Notifications,
+                contentDescription = if (quantidade > 0) "$quantidade relatos em aberto" else "Notificações",
+                tint = if (quantidade > 0) Color.White else TextoSecundario,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        if (quantidade > 0) {
+            Box(
+                modifier = Modifier
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
+                    .clip(CircleShape)
+                    .background(Laranja)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (quantidade > 9) "9+" else quantidade.toString(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 

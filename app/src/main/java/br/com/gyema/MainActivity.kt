@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.*
 import br.com.gyema.ui.components.GyemaBottomBar
 import br.com.gyema.ui.navegacao.Tela
@@ -37,6 +39,7 @@ fun GyemaApp() {
     val rota = entry?.destination?.route
     val abaAtual = when (rota) {
         Tela.MapaAcademia.rota, Tela.Equipamentos.rota, Tela.GerenciarEquipamentos.rota -> Tela.Academia.rota
+        Tela.Grupos.rota -> Tela.Comunidade.rota
         else -> rota
     }
 
@@ -138,10 +141,19 @@ fun GyemaApp() {
                 )
             }
             composable(Tela.Comunidade.rota) {
-                TelaComunidade(onAbrirPost = { nav.navigate(Tela.Publicacao.rota) })
+                TelaComunidade(
+                    onAbrirPost = { id -> nav.navigate(Tela.Publicacao.criar(id)) },
+                    onGrupos = { nav.navigate(Tela.Grupos.rota) }
+                )
             }
-            composable(Tela.Publicacao.rota) {
-                TelaPublicacao(onVoltar = { nav.popBackStack() })
+            composable(
+                Tela.Publicacao.rota,
+                arguments = listOf(navArgument("postId") { type = NavType.LongType })
+            ) { entrada ->
+                TelaPublicacao(
+                    postId = entrada.arguments?.getLong("postId") ?: 0L,
+                    onVoltar = { nav.popBackStack() }
+                )
             }
             composable(Tela.Perfil.rota) {
                 TelaPerfil(
@@ -186,7 +198,8 @@ fun GyemaApp() {
             }
             composable(Tela.Grupos.rota) {
                 TelaGrupos(onCriar = { nav.navigate(Tela.CriarGrupo.rota) },
-                    onChatbot = { nav.navigate(Tela.Chatbot.rota) })
+                    onChatbot = { nav.navigate(Tela.Chatbot.rota) },
+                    onVoltar = { nav.popBackStack() })
             }
             composable(Tela.CriarGrupo.rota) {
                 TelaCriarGrupo(onVoltar = { nav.popBackStack() })
@@ -203,40 +216,29 @@ fun GyemaApp() {
             // ==========================================
             composable(Tela.GerenciarEquipamentos.rota) {
                 TelaGerenciarEquipamentos(
-                    isLoadingInicial = false,
                     onBackClick = { nav.popBackStack() },
-                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.rota) }
+                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.criar()) },
+                    onEquipamentoClick = { id -> nav.navigate(Tela.CadastrarEquipamento.criar(id)) }
                 )
             }
-            composable(Tela.GerenciarEquipamentosCarregando.rota) {
-                TelaGerenciarEquipamentos(
-                    isLoadingInicial = true,
-                    onBackClick = { nav.popBackStack() },
-                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.rota) }
-                )
-            }
-            composable(Tela.CadastrarEquipamento.rota) {
+            composable(
+                Tela.CadastrarEquipamento.rota,
+                arguments = listOf(navArgument("equipamentoId") { type = NavType.StringType; nullable = true })
+            ) { entrada ->
                 TelaCadastrarEquipamento(
+                    equipamentoId = entrada.arguments?.getString("equipamentoId")?.toIntOrNull(),
                     onBackClick = { nav.popBackStack() },
                     onSaveClick = { nav.popBackStack() }
                 )
             }
-            composable(Tela.NovaFichaTreino.rota) {
+            composable(
+                Tela.NovaFichaTreino.rota,
+                arguments = listOf(navArgument("alunoId") { type = NavType.StringType; nullable = true })
+            ) { entrada ->
                 TelaNovaFichaTreino(
+                    alunoIdInicial = entrada.arguments?.getString("alunoId"),
                     onBackClick = { nav.popBackStack() },
                     onSaveClick = { nav.popBackStack() }
-                )
-            }
-            composable(Tela.GerenciarEquipamentosVazio.rota) {
-                TelaGerenciarEquipamentosVazio(
-                    onBackClick = { nav.popBackStack() },
-                    onCadastrarClick = { nav.navigate(Tela.CadastrarEquipamento.rota) }
-                )
-            }
-            composable(Tela.GerenciarEquipamentosErro.rota) {
-                TelaGerenciarEquipamentosErro(
-                    onBackClick = { nav.popBackStack() },
-                    onTentarNovamente = { nav.popBackStack() }
                 )
             }
             composable(Tela.RelatosProblemas.rota) {
@@ -253,7 +255,7 @@ fun GyemaApp() {
             composable(Tela.PainelInstrutor.rota) {
                 TelaPainelInstrutor(
                     onMeusAlunosClick = { nav.navigate(Tela.ListaAlunos.rota) },
-                    onFichasTreinoClick = { nav.navigate(Tela.NovaFichaTreino.rota) },
+                    onFichasTreinoClick = { nav.navigate(Tela.NovaFichaTreino.criar()) },
                     onEquipamentosClick = { nav.navigate(Tela.GerenciarEquipamentos.rota) },
                     onRelatosProblemasClick = { nav.navigate(Tela.RelatosProblemas.rota) },
                     onNotificacoesClick = { nav.navigate(Tela.RelatosProblemas.rota) }
@@ -262,17 +264,20 @@ fun GyemaApp() {
             composable(Tela.ListaAlunos.rota) {
                 TelaListaAlunos(
                     onVoltarClick = { nav.popBackStack() },
-                    onAlunoClick = { alunoId -> nav.navigate(Tela.DetalhesAluno.rota) },
-                    onPainelClick = { nav.navigate(Tela.PainelInstrutor.rota) },
-                    onFichasClick = { nav.navigate(Tela.NovaFichaTreino.rota) },
+                    onAlunoClick = { alunoId -> nav.navigate(Tela.DetalhesAluno.criar(alunoId)) },
+                    onPainelClick = { nav.popBackStack(Tela.PainelInstrutor.rota, inclusive = false) },
+                    onFichasClick = { nav.navigate(Tela.NovaFichaTreino.criar()) },
                     onEquipamentosClick = { nav.navigate(Tela.GerenciarEquipamentos.rota) }
                 )
             }
-            composable(Tela.DetalhesAluno.rota) {
+            composable(
+                Tela.DetalhesAluno.rota,
+                arguments = listOf(navArgument("alunoId") { type = NavType.StringType })
+            ) { entrada ->
                 TelaDetalhesAluno(
+                    alunoId = entrada.arguments?.getString("alunoId").orEmpty(),
                     onVoltarClick = { nav.popBackStack() },
-                    onFichaPrincipalClick = { nav.navigate(Tela.DetalhesTreino.rota) },
-                    onCriarNovaFichaClick = { nav.navigate(Tela.NovaFichaTreino.rota) }
+                    onCriarNovaFichaClick = { id -> nav.navigate(Tela.NovaFichaTreino.criar(id)) }
                 )
             }
         }
