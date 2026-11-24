@@ -1,14 +1,10 @@
 package br.com.gyema.data
 
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
-import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.io.IOException
 import java.time.Instant
 
 // =====================================================================
@@ -197,9 +193,6 @@ private data class LinhaEquipExercicio(
     val tipo: String
 )
 
-/** Erro mostrado quando a tela precisa de alguém logado. */
-class SemSessaoException : Exception("Entre com uma conta de instrutor para ver estes dados.")
-
 // =====================================================================
 // Consultas e gravações das telas do instrutor.
 // As regras de acesso (RLS) ficam no banco: um aluno logado recebe listas
@@ -209,8 +202,7 @@ object RepositorioInstrutor {
 
     private val db get() = Supabase.cliente
 
-    private fun usuarioId(): String =
-        db.auth.currentUserOrNull()?.id ?: throw SemSessaoException()
+    private fun usuarioId(): String = usuarioLogadoId("Entre com uma conta de instrutor para ver estes dados.")
 
     // ---------- Painel ----------
 
@@ -380,33 +372,5 @@ object RepositorioInstrutor {
             set("status", status)
             if (status == "resolvido") set("resolvido_em", Instant.now().toString())
         }) { filter { eq("id", id) } }
-    }
-}
-
-/** Executa [bloco] devolvendo sucesso ou falha, sem engolir o cancelamento da tela. */
-suspend fun <T> tentar(bloco: suspend () -> T): Result<T> =
-    try {
-        Result.success(bloco())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
-
-/** Texto amigável para mostrar na tela a partir de um erro do Supabase. */
-fun mensagemDeErro(e: Throwable): String {
-    val texto = e.message.orEmpty()
-    return when {
-        !Supabase.configurado ->
-            "O banco não está configurado. Preencha SUPABASE_URL e SUPABASE_KEY no local.properties."
-        e is SemSessaoException -> e.message!!
-        e is HttpRequestException || e is IOException ->
-            "Sem conexão com o servidor. Verifique a internet e tente novamente."
-        "duplicate key" in texto && "codigo" in texto ->
-            "Já existe um equipamento com essa identificação."
-        "duplicate key" in texto -> "Esse registro já existe."
-        "row-level security" in texto || "permission denied" in texto ->
-            "Sua conta não tem permissão de instrutor."
-        else -> "Não foi possível concluir. Tente novamente."
     }
 }

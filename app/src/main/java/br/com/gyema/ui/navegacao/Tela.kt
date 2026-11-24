@@ -22,7 +22,9 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object Perfil : Tela("perfil", "Perfil", Icons.Outlined.Person)
     object Evolucao : Tela("evolucao", "Evolução", Icons.Outlined.ShowChart)
     object EmUtilizacao : Tela("em_utilizacao", "Em utilização", Icons.Outlined.Timer)
-    object Publicacao : Tela("publicacao", "Publicação", Icons.Outlined.Forum)
+    object Publicacao : Tela("publicacao/{postId}", "Publicação", Icons.Outlined.Forum) {
+        fun criar(postId: Long) = "publicacao/$postId"
+    }
     object CadastroPasso1 : Tela("cadastro_passo_1", "Cadastro", Icons.Outlined.PersonAdd)
     object CadastroPasso2 : Tela("cadastro_passo_2", "Informações pessoais", Icons.Outlined.Badge)
     object CadastroPasso3 : Tela("cadastro_passo_3", "Teste de prontidão", Icons.Outlined.Assignment)

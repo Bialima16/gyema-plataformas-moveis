@@ -98,3 +98,16 @@ fun formatarData(iso: String, padrao: String = "dd/MM/yyyy"): String =
         OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern(padrao))
     }.getOrDefault("")
+
+/** "agora", "há 5 min", "há 2 h", "há 3 dias" ou a data, para datas mais antigas. */
+fun tempoRelativo(iso: String): String {
+    val instante = runCatching { OffsetDateTime.parse(iso).toInstant() }.getOrNull() ?: return ""
+    val minutos = java.time.Duration.between(instante, java.time.Instant.now()).toMinutes()
+    return when {
+        minutos < 1 -> "agora"
+        minutos < 60 -> "há $minutos min"
+        minutos < 24 * 60 -> "há ${minutos / 60} h"
+        minutos < 7 * 24 * 60 -> (minutos / (24 * 60)).let { if (it == 1L) "há 1 dia" else "há $it dias" }
+        else -> formatarData(iso, "dd/MM/yyyy")
+    }
+}

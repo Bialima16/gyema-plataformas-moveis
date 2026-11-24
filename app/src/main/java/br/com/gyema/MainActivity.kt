@@ -39,6 +39,7 @@ fun GyemaApp() {
     val rota = entry?.destination?.route
     val abaAtual = when (rota) {
         Tela.MapaAcademia.rota, Tela.Equipamentos.rota, Tela.GerenciarEquipamentos.rota -> Tela.Academia.rota
+        Tela.Grupos.rota -> Tela.Comunidade.rota
         else -> rota
     }
 
@@ -140,10 +141,19 @@ fun GyemaApp() {
                 )
             }
             composable(Tela.Comunidade.rota) {
-                TelaComunidade(onAbrirPost = { nav.navigate(Tela.Publicacao.rota) })
+                TelaComunidade(
+                    onAbrirPost = { id -> nav.navigate(Tela.Publicacao.criar(id)) },
+                    onGrupos = { nav.navigate(Tela.Grupos.rota) }
+                )
             }
-            composable(Tela.Publicacao.rota) {
-                TelaPublicacao(onVoltar = { nav.popBackStack() })
+            composable(
+                Tela.Publicacao.rota,
+                arguments = listOf(navArgument("postId") { type = NavType.LongType })
+            ) { entrada ->
+                TelaPublicacao(
+                    postId = entrada.arguments?.getLong("postId") ?: 0L,
+                    onVoltar = { nav.popBackStack() }
+                )
             }
             composable(Tela.Perfil.rota) {
                 TelaPerfil(
@@ -188,7 +198,8 @@ fun GyemaApp() {
             }
             composable(Tela.Grupos.rota) {
                 TelaGrupos(onCriar = { nav.navigate(Tela.CriarGrupo.rota) },
-                    onChatbot = { nav.navigate(Tela.Chatbot.rota) })
+                    onChatbot = { nav.navigate(Tela.Chatbot.rota) },
+                    onVoltar = { nav.popBackStack() })
             }
             composable(Tela.CriarGrupo.rota) {
                 TelaCriarGrupo(onVoltar = { nav.popBackStack() })

@@ -233,6 +233,19 @@ As consultas e gravações ficam em `app/src/main/java/br/com/gyema/data/Reposit
 
 Para testar, entre no app com uma conta promovida a instrutor (seção "Criar um instrutor"). Sem login, as telas avisam que é preciso entrar com uma conta de instrutor.
 
+### Telas da Comunidade (já ligadas ao banco)
+
+As consultas e gravações ficam em `app/src/main/java/br/com/gyema/data/RepositorioComunidade.kt`.
+
+| Tela | O que faz no banco |
+|---|---|
+| Comunidade (feed) | Lê `feed_posts` (abas Todas e Minhas). Publica em `posts`; curtir/descurtir grava ou apaga em `curtidas` |
+| Publicação | Lê o post em `feed_posts` e os comentários em `comentarios` (nomes via `perfis_publicos`). Comenta, exclui comentário e exclui a publicação (o autor ou um instrutor) |
+| Grupos | Lê `grupos` e `membros_grupo`, separa "Meus grupos" e "Descobrir". Entrar e sair gravam em `membros_grupo` |
+| Criar grupo | Grava em `grupos`; quem cria entra como membro pelo trigger `grupos_criador_membro` |
+
+Grupos privados só aparecem para os membros. Ainda não há tela para o criador adicionar pessoas a um grupo privado.
+
 ## Regras que o próprio banco garante
 
 - Um aluno **não consegue** virar instrutor, ver dados de outro aluno nem editar equipamentos, nem que tente pelo código.
