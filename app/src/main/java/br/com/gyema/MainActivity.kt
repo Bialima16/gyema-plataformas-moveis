@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -19,10 +20,50 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.*
+import br.com.gyema.data.EdicaoPerfilAluno
+import br.com.gyema.data.RepositorioAluno
+import br.com.gyema.data.RepositorioInstrutor
+import br.com.gyema.data.Supabase
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
+import br.com.gyema.ui.components.EstadoCarregando
 import br.com.gyema.ui.components.GyemaBottomBar
 import br.com.gyema.ui.navegacao.Tela
 import br.com.gyema.ui.tema.*
 import br.com.gyema.ui.telas.*
+import android.content.Intent
+import androidx.compose.ui.Alignment
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.launch
+
+// estado compartilhado do cadastro
+class EstadoCadastro {
+    var nome by mutableStateOf("")
+    var email by mutableStateOf("")
+    var senha by mutableStateOf("")
+    var cpf by mutableStateOf("")
+    var matricula by mutableStateOf("")
+    var dataNascimento by mutableStateOf("")
+    var genero by mutableStateOf("")
+    var peso by mutableStateOf("")
+    var altura by mutableStateOf("")
+    var contatoEmergencia by mutableStateOf("")
+
+    fun limpar() {
+        nome = ""
+        email = ""
+        senha = ""
+        cpf = ""
+        matricula = ""
+        dataNascimento = ""
+        genero = ""
+        peso = ""
+        altura = ""
+        contatoEmergencia = ""
+    }
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,11 +71,70 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent { GyemaTheme { GyemaApp() } }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
 }
 
 @Composable
 fun GyemaApp() {
     val nav = rememberNavController()
+    val estadoCadastro = remember { EstadoCadastro() }
+
+    // controle de sessao
+    val sessionStatusState = if (Supabase.configurado) {
+        Supabase.cliente.auth.sessionStatus.collectAsState()
+    } else null
+    val status = sessionStatusState?.value ?: SessionStatus.NotAuthenticated(isSignOut = false)
+
+    LaunchedEffect(status) {
+        when (status) {
+            is SessionStatus.Authenticated -> {
+                val rotaAtual = nav.currentDestination?.route
+                if (rotaAtual == null || rotaAtual == Tela.BoasVindas.rota) {
+                    val destino = runCatching {
+                        val perfil = RepositorioInstrutor.meuPerfil()
+                        if (perfil.perfil.lowercase() == "instrutor") {
+                            Tela.PainelInstrutor.rota
+                        } else {
+                            Tela.Inicio.rota
+                        }
+                    }.getOrDefault(Tela.Inicio.rota)
+
+                    nav.navigate(destino) {
+                        popUpTo(Tela.BoasVindas.rota) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            is SessionStatus.NotAuthenticated -> {
+                val rotaAtual = nav.currentDestination?.route
+                if (rotaAtual != null && rotaAtual != Tela.BoasVindas.rota && rotaAtual != Tela.Login.rota && rotaAtual != Tela.Recuperacao.rota && !rotaAtual.startsWith("cadastro")) {
+                    nav.navigate(Tela.BoasVindas.rota) {
+                        popUpTo(nav.graph.id) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            else -> {}
+        }
+    }
+
+    // carregando inicial
+    if (status is SessionStatus.Initializing) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Fundo),
+            contentAlignment = Alignment.Center
+        ) {
+            EstadoCarregando()
+        }
+        return
+    }
+
     val entry by nav.currentBackStackEntryAsState()
     val rota = entry?.destination?.route
     val abaAtual = when (rota) {
@@ -64,7 +164,7 @@ fun GyemaApp() {
                     onDemonstracao = { nav.navigate(Tela.Inicio.rota) })
             }
 
-            // Fluxo de Login com suporte a redirecionamento de Instrutor
+            // fluxo de login e redirecionamento
             composable(Tela.Login.rota) {
                 TelaLogin(
                     onVoltar = { nav.popBackStack() },
@@ -88,17 +188,104 @@ fun GyemaApp() {
                 TelaRecuperacao(onVoltar = { nav.popBackStack() })
             }
             composable(Tela.CadastroPasso1.rota) {
-                TelaCadastroPasso1(onVoltar = { nav.popBackStack() },
-                    onAvancar = { nav.navigate(Tela.CadastroPasso2.rota) },
-                    onLogin = { nav.navigate(Tela.Login.rota) })
+                TelaCadastroPasso1(
+                    onVoltar = { nav.popBackStack() },
+                    onAvancar = { nome, email, senha ->
+                        estadoCadastro.nome = nome
+                        estadoCadastro.email = email
+                        estadoCadastro.senha = senha
+                        nav.navigate(Tela.CadastroPasso2.rota)
+                    },
+                    onLogin = { nav.navigate(Tela.Login.rota) },
+                    nomeInicial = estadoCadastro.nome,
+                    emailInicial = estadoCadastro.email,
+                    senhaInicial = estadoCadastro.senha
+                )
             }
             composable(Tela.CadastroPasso2.rota) {
-                TelaCadastroPasso2(onVoltar = { nav.popBackStack() },
-                    onAvancar = { nav.navigate(Tela.CadastroPasso3.rota) })
+                TelaCadastroPasso2(
+                    onVoltar = { nav.popBackStack() },
+                    onAvancar = { cpf, matricula, dataNascimento, genero, peso, altura ->
+                        estadoCadastro.cpf = cpf
+                        estadoCadastro.matricula = matricula
+                        estadoCadastro.dataNascimento = dataNascimento
+                        estadoCadastro.genero = genero
+                        estadoCadastro.peso = peso
+                        estadoCadastro.altura = altura
+                        nav.navigate(Tela.CadastroPasso3.rota)
+                    },
+                    cpfInicial = estadoCadastro.cpf,
+                    matriculaInicial = estadoCadastro.matricula,
+                    dataNascimentoInicial = estadoCadastro.dataNascimento,
+                    generoInicial = estadoCadastro.genero,
+                    pesoInicial = estadoCadastro.peso,
+                    alturaInicial = estadoCadastro.altura
+                )
             }
             composable(Tela.CadastroPasso3.rota) {
-                TelaCadastroPasso3(onVoltar = { nav.popBackStack() },
-                    onAvancar = { nav.navigate(Tela.Inicio.rota) })
+                val scope = rememberCoroutineScope()
+                var carregando by remember { mutableStateOf(false) }
+                var erroGeral by remember { mutableStateOf<String?>(null) }
+
+                TelaCadastroPasso3(
+                    onVoltar = { nav.popBackStack() },
+                    onConcluir = { contato ->
+                        estadoCadastro.contatoEmergencia = contato
+                        if (Supabase.configurado) {
+                            carregando = true
+                            erroGeral = null
+                            scope.launch {
+                                tentar {
+                                    Supabase.cliente.auth.signUpWith(Email) {
+                                        this.email = estadoCadastro.email.trim()
+                                        this.password = estadoCadastro.senha
+                                    }
+
+                                    val pesoNum = estadoCadastro.peso.replace(',', '.').toDoubleOrNull()
+                                    val alturaNum = estadoCadastro.altura.replace(',', '.').toDoubleOrNull()
+                                    val dataBanco = estadoCadastro.dataNascimento.trim().takeIf { it.isNotBlank() }?.let {
+                                        runCatching {
+                                            val partes = it.split("/")
+                                            if (partes.size == 3) "${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}"
+                                            else it
+                                        }.getOrNull()
+                                    }
+
+                                    val edicao = EdicaoPerfilAluno(
+                                        nome = estadoCadastro.nome.trim(),
+                                        matricula = estadoCadastro.matricula.trim().ifBlank { null },
+                                        cpf = estadoCadastro.cpf.trim().ifBlank { null },
+                                        curso = null,
+                                        dataNascimento = dataBanco,
+                                        genero = estadoCadastro.genero.trim().ifBlank { null },
+                                        pesoKg = pesoNum,
+                                        alturaCm = alturaNum,
+                                        contatoEmergencia = estadoCadastro.contatoEmergencia.trim().ifBlank { null }
+                                    )
+
+                                    RepositorioAluno.salvarPerfil(edicao)
+                                }.onSuccess {
+                                    carregando = false
+                                    estadoCadastro.limpar()
+                                    nav.navigate(Tela.Inicio.rota) {
+                                        popUpTo(Tela.BoasVindas.rota) { inclusive = true }
+                                    }
+                                }.onFailure { throwable ->
+                                    carregando = false
+                                    erroGeral = mensagemDeErro(throwable)
+                                }
+                            }
+                        } else {
+                            nav.navigate(Tela.Inicio.rota) {
+                                popUpTo(Tela.BoasVindas.rota) { inclusive = true }
+                            }
+                        }
+                    },
+                    contatoInicial = estadoCadastro.contatoEmergencia,
+                    carregando = carregando,
+                    erroGeral = erroGeral,
+                    onLimparErro = { erroGeral = null }
+                )
             }
             composable(Tela.Inicio.rota) {
                 TelaPrincipal(
@@ -191,11 +378,17 @@ fun GyemaApp() {
                 )
             }
             composable(Tela.Perfil.rota) {
+                val scope = rememberCoroutineScope()
                 TelaPerfil(
                     onSair = {
-                        nav.navigate(Tela.BoasVindas.rota) {
-                            popUpTo(nav.graph.id) { inclusive = true }
-                            launchSingleTop = true
+                        scope.launch {
+                            if (Supabase.configurado) {
+                                runCatching { Supabase.cliente.auth.signOut() }
+                            }
+                            nav.navigate(Tela.BoasVindas.rota) {
+                                popUpTo(nav.graph.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     },
                     onSuporte = { nav.navigate(Tela.AcessibilidadeSuporte.rota) },
