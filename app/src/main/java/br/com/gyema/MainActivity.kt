@@ -106,38 +106,73 @@ fun GyemaApp() {
                     onAcademia = { nav.navigate(Tela.Academia.rota) },
                     onComunidade = { nav.navigate(Tela.Comunidade.rota) },
                     onChatbot = { nav.navigate(Tela.Chatbot.rota) },
-                    onSugestoes = { nav.navigate(Tela.ReportarProblema.rota) },
+                    onSugestoes = { nav.navigate(Tela.ReportarProblema.criar()) },
                     onNotificacoes = { nav.navigate(Tela.Comunidade.rota) }
                 )
             }
             composable(Tela.Treinos.rota) {
-                TelaMeusTreinos(onAbrirTreino = { nav.navigate(Tela.DetalhesTreino.rota) })
+                TelaMeusTreinos(
+                    onAbrirTreino = { fichaId -> nav.navigate(Tela.DetalhesTreino.criar(fichaId)) },
+                    onAbrirExecucao = { execucaoId -> nav.navigate(Tela.ResumoTreino.criar(execucaoId)) },
+                    onEvolucao = { nav.navigate(Tela.Evolucao.rota) }
+                )
             }
-            composable(Tela.DetalhesTreino.rota) {
-                TelaDetalhesTreino(onVoltar = { nav.popBackStack() },
-                    onIniciar = { nav.navigate(Tela.Execucao.rota) })
+            composable(
+                Tela.DetalhesTreino.rota,
+                arguments = listOf(navArgument("fichaId") { type = NavType.LongType })
+            ) { entrada ->
+                TelaDetalhesTreino(
+                    fichaId = entrada.arguments?.getLong("fichaId") ?: 0L,
+                    onVoltar = { nav.popBackStack() },
+                    onIniciar = { fichaId -> nav.navigate(Tela.Execucao.criar(fichaId)) }
+                )
             }
-            composable(Tela.Execucao.rota) {
-                TelaExecucao(onVoltar = { nav.popBackStack() })
+            composable(
+                Tela.Execucao.rota,
+                arguments = listOf(navArgument("fichaId") { type = NavType.LongType })
+            ) { entrada ->
+                TelaExecucao(
+                    fichaId = entrada.arguments?.getLong("fichaId") ?: 0L,
+                    onVoltar = { nav.popBackStack() },
+                    onConcluido = { execucaoId ->
+                        nav.navigate(Tela.ResumoTreino.criar(execucaoId)) {
+                            popUpTo(Tela.Execucao.rota) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(Tela.Academia.rota) {
-                TelaAcademiaAgora(onAbrirMapa = { nav.navigate(Tela.MapaAcademia.rota) })
+                TelaAcademiaAgora(
+                    onAbrirMapa = { nav.navigate(Tela.MapaAcademia.rota) },
+                    onAbrirSetor = { setorId -> nav.navigate(Tela.Equipamentos.criar(setorId)) }
+                )
             }
             composable(Tela.MapaAcademia.rota) {
                 TelaMapaAcademia(onVoltar = { nav.popBackStack() },
-                    onAbrirZona = { nav.navigate(Tela.Equipamentos.rota) })
+                    onAbrirZona = { setorId -> nav.navigate(Tela.Equipamentos.criar(setorId)) })
             }
-            composable(Tela.Equipamentos.rota) {
-                TelaEquipamentos(onVoltar = { nav.popBackStack() },
-                    onDetalhesEquipamento = { nav.navigate(Tela.DetalhesEquipamento.rota) },
-                    onFinalizarUso = { nav.navigate(Tela.ResumoTreino.rota) },
-                    onLerQrCode = { nav.navigate(Tela.RegistroUtilizacao.rota) })
-            }
-            composable(Tela.DetalhesEquipamento.rota) {
-                TelaDetalhesEquipamento(
+            composable(
+                Tela.Equipamentos.rota,
+                arguments = listOf(navArgument("setorId") { type = NavType.StringType; nullable = true })
+            ) { entrada ->
+                TelaEquipamentos(
+                    setorId = entrada.arguments?.getString("setorId")?.toIntOrNull(),
                     onVoltar = { nav.popBackStack() },
-                    onIniciarUso = { nav.navigate(Tela.RegistroUtilizacao.rota) },
-                    onReportarProblema = { nav.navigate(Tela.ReportarProblema.rota) }
+                    onDetalhesEquipamento = { id -> nav.navigate(Tela.DetalhesEquipamento.criar(id)) },
+                    onAbrirUso = { nav.navigate(Tela.EmUtilizacao.rota) },
+                    onLerQrCode = { nav.navigate(Tela.RegistroUtilizacao.criar()) }
+                )
+            }
+            composable(
+                Tela.DetalhesEquipamento.rota,
+                arguments = listOf(navArgument("equipamentoId") { type = NavType.IntType })
+            ) { entrada ->
+                TelaDetalhesEquipamento(
+                    equipamentoId = entrada.arguments?.getInt("equipamentoId") ?: 0,
+                    onVoltar = { nav.popBackStack() },
+                    onIniciarUso = { id -> nav.navigate(Tela.RegistroUtilizacao.criar(id)) },
+                    onAbrirUso = { nav.navigate(Tela.EmUtilizacao.rota) },
+                    onReportarProblema = { id -> nav.navigate(Tela.ReportarProblema.criar(id)) }
                 )
             }
             composable(Tela.Comunidade.rota) {
@@ -172,17 +207,37 @@ fun GyemaApp() {
             }
             composable(Tela.EmUtilizacao.rota) {
                 TelaEmUtilizacao(onVoltar = { nav.popBackStack() },
-                    onFinalizar = { nav.navigate(Tela.ResumoTreino.rota) },
-                    onReportar = { nav.navigate(Tela.ReportarProblema.rota) })
+                    onFinalizado = { nav.popBackStack() },
+                    onReportar = { id -> nav.navigate(Tela.ReportarProblema.criar(id)) })
             }
-            composable(Tela.RegistroUtilizacao.rota) {
-                TelaRegistroUtilizacao(onVoltarTreino = { nav.popBackStack() },
-                    onFinalizarUtilizacao = { nav.navigate(Tela.ResumoTreino.rota) },
-                    onReportarProblema = { nav.navigate(Tela.ReportarProblema.rota) })
+            composable(
+                Tela.RegistroUtilizacao.rota,
+                arguments = listOf(navArgument("equipamentoId") { type = NavType.StringType; nullable = true })
+            ) { entrada ->
+                TelaRegistroUtilizacao(
+                    equipamentoId = entrada.arguments?.getString("equipamentoId")?.toIntOrNull(),
+                    onVoltar = { nav.popBackStack() },
+                    onUsoIniciado = {
+                        nav.navigate(Tela.EmUtilizacao.rota) {
+                            popUpTo(Tela.RegistroUtilizacao.rota) { inclusive = true }
+                        }
+                    },
+                    onReportarProblema = { id -> nav.navigate(Tela.ReportarProblema.criar(id)) }
+                )
             }
-            composable(Tela.ReportarProblema.rota) {
-                TelaReportarProblema(onVoltar = { nav.popBackStack() },
-                    onEnviarRelato = { nav.navigate(Tela.ProblemaReportado.rota) })
+            composable(
+                Tela.ReportarProblema.rota,
+                arguments = listOf(navArgument("equipamentoId") { type = NavType.StringType; nullable = true })
+            ) { entrada ->
+                TelaReportarProblema(
+                    equipamentoId = entrada.arguments?.getString("equipamentoId")?.toIntOrNull(),
+                    onVoltar = { nav.popBackStack() },
+                    onEnviarRelato = {
+                        nav.navigate(Tela.ProblemaReportado.rota) {
+                            popUpTo(Tela.ReportarProblema.rota) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(Tela.ProblemaReportado.rota) {
                 TelaProblemaReportado(onVoltar = { nav.popBackStack() })
@@ -193,8 +248,16 @@ fun GyemaApp() {
             composable(Tela.EquipamentoOcupado.rota) {
                 TelaEquipamentoOcupado(onVoltar = { nav.popBackStack() })
             }
-            composable(Tela.ResumoTreino.rota) {
-                TelaResumoTreino(onVoltar = { nav.navigate(Tela.Treinos.rota) })
+            composable(
+                Tela.ResumoTreino.rota,
+                arguments = listOf(navArgument("execucaoId") { type = NavType.LongType })
+            ) { entrada ->
+                TelaResumoTreino(
+                    execucaoId = entrada.arguments?.getLong("execucaoId") ?: 0L,
+                    onVoltar = {
+                        if (!nav.popBackStack(Tela.Treinos.rota, inclusive = false)) nav.navigate(Tela.Treinos.rota)
+                    }
+                )
             }
             composable(Tela.Grupos.rota) {
                 TelaGrupos(onCriar = { nav.navigate(Tela.CriarGrupo.rota) },

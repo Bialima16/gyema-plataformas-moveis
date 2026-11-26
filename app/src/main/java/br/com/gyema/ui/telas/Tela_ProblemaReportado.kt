@@ -90,7 +90,7 @@ fun TelaProblemaReportado(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Voltar para equipamentos",
+                text = "Voltar",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White

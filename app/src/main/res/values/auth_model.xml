@@ -8,8 +8,8 @@
     <string name="model_academy">ACADEMIA UNIFOR</string>
     <string name="model_back">Voltar para boas-vindas</string>
     <string name="model_brand">GYEMA</string>
-    <string name="model_brand_description">SÃ­mbolo Gyema</string>
-    <string name="model_demo_open">Explorar demonstraÃ§Ã£o</string>
+    <string name="model_brand_description">Símbolo Gyema</string>
+    <string name="model_demo_open">Explorar demonstração</string>
     <string name="model_description">Rotina adaptada ao objetivo. Treinos\npersonalizados.</string>
     <string name="model_email_hint">Digite seu e-mail</string>
     <string name="model_email_label">Email</string>
@@ -18,23 +18,23 @@
     </string>
     <string name="model_login">Entrar em sua conta</string>
     <string name="model_login_description">Acesse com seu email institucional ou\ncadastrado.</string>
-    <string name="model_login_welcome">Ã‰ BOM TE TER DE VOLTA !</string>
-    <string name="model_no_account">NÃ£o tem uma conta? <u>
+    <string name="model_login_welcome">É BOM TE TER DE VOLTA !</string>
+    <string name="model_no_account">Não tem uma conta? <u>
             <font color="#F4A16D">Cadastre-se</font>
         </u>
     </string>
     <string name="model_password_hint">Digite sua senha</string>
     <string name="model_password_label">Senha</string>
     <string name="model_privacy">Privacidade</string>
-    <string name="model_recovery_description">Digite o e-mail cadastrado na sua conta institucional ou pessoal para receber o link de redefiniÃ§Ã£o de acesso.</string>
+    <string name="model_recovery_description">Digite o e-mail cadastrado na sua conta institucional ou pessoal para receber o link de redefinição de acesso.</string>
     <string name="model_recovery_email_hint">Digite seu e-mail cadastrado</string>
     <string name="model_recovery_title">RECUPERAR SENHA</string>
     <string name="model_register">Primeiro acesso? Cadastre-se</string>
-    <string name="model_remember_user">Lembrar identificaÃ§Ã£o de usuÃ¡rio</string>
-    <string name="model_request_recovery">Solicitar redefiniÃ§Ã£o</string>
+    <string name="model_remember_user">Lembrar identificação de usuário</string>
+    <string name="model_request_recovery">Solicitar redefinição</string>
     <string name="model_show_password">Mostrar senha</string>
     <string name="model_support">Suporte TI</string>
-    <string name="model_tagline">A sua evoluÃ§Ã£o ao\nmais alto nÃ­vel</string>
+    <string name="model_tagline">A sua evolução ao\nmais alto nível</string>
     <string name="model_terms">Termos de uso</string>
     <string name="model_training">TREINOS</string>
     <string name="model_welcome">SEJA BEM-VINDO!</string>
