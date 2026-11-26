@@ -28,8 +28,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import br.com.gyema.R
+import br.com.gyema.data.RepositorioInstrutor
+import br.com.gyema.data.Supabase
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
 import br.com.gyema.ui.components.AvisoPendente
 import br.com.gyema.ui.tema.GyemaTheme
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
 
 private val FundoAuthCor = Color(0xFF090D29)
 private val LaranjaAuth = Color(0xFFD74700)
@@ -225,6 +232,7 @@ fun TelaLogin(
     onLoginSucesso: (isFuncionario: Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val prefs = remember(context) { context.getSharedPreferences("gyema_identification", Context.MODE_PRIVATE) }
     var email by rememberSaveable { mutableStateOf(prefs.getString("email", "").orEmpty()) }
     var senha by remember { mutableStateOf("") }
@@ -233,25 +241,65 @@ fun TelaLogin(
     var visivel by remember { mutableStateOf(false) }
     var erroEmail by remember { mutableStateOf<String?>(null) }
     var erroSenha by remember { mutableStateOf<String?>(null) }
+    var erroGeral by remember { mutableStateOf<String?>(null) }
+    var carregando by remember { mutableStateOf(false) }
     var aviso by remember { mutableStateOf<Int?>(null) }
     FundoAutenticacao {
-        ConteudoLogin(email, { email = it; erroEmail = null },
-            senha, { senha = it; erroSenha = null }, lembrar, {
-                lembrar = it
-                if (!it) prefs.edit().remove("email").apply()
-            }, funcionario, { funcionario = it },
-            visivel, { visivel = !visivel }, erroEmail, erroSenha,
-            onRecuperar, {
-                // Acesso demonstrativo: aceita qualquer identificador não vazio.
-                // Não consulta banco de dados nem valida formato ou credenciais.
-                erroEmail = if (email.isBlank()) context.getString(R.string.auth_email_required) else null
-                erroSenha = if (senha.isBlank()) context.getString(R.string.auth_password_required) else null
-                if (erroEmail == null && erroSenha == null) {
-                    if (lembrar) prefs.edit().putString("email", email.trim()).apply()
-                    else prefs.edit().remove("email").apply()
-                    aviso = R.string.auth_login_pending
+        Box(Modifier.fillMaxSize()) {
+            ConteudoLogin(
+                email, { email = it; erroEmail = null; erroGeral = null },
+                senha, { senha = it; erroSenha = null; erroGeral = null },
+                lembrar, {
+                    lembrar = it
+                    if (!it) prefs.edit().remove("email").apply()
+                }, funcionario, { funcionario = it },
+                visivel, { visivel = !visivel }, erroEmail, erroSenha,
+                onRecuperar, {
+                    erroEmail = if (email.isBlank()) context.getString(R.string.auth_email_required) else null
+                    erroSenha = if (senha.isBlank()) context.getString(R.string.auth_password_required) else null
+                    if (erroEmail == null && erroSenha == null) {
+                        if (lembrar) prefs.edit().putString("email", email.trim()).apply()
+                        else prefs.edit().remove("email").apply()
+
+                        if (Supabase.configurado) {
+                            carregando = true
+                            erroGeral = null
+                            scope.launch {
+                                tentar {
+                                    Supabase.cliente.auth.signInWith(Email) {
+                                        this.email = email.trim()
+                                        this.password = senha
+                                    }
+                                    val perfil = RepositorioInstrutor.meuPerfil()
+                                    perfil.perfil.lowercase() == "instrutor" || funcionario
+                                }.onSuccess { isInstrutor ->
+                                    carregando = false
+                                    onLoginSucesso(isInstrutor)
+                                }.onFailure { throwable ->
+                                    carregando = false
+                                    erroGeral = mensagemDeErro(throwable)
+                                }
+                            }
+                        } else {
+                            aviso = R.string.auth_login_pending
+                        }
+                    }
+                }, onCadastrar, onVoltar
+            )
+            if (carregando) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color(0x99000000)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = LaranjaAuth)
                 }
-            }, onCadastrar, onVoltar)
+            }
+        }
+    }
+    erroGeral?.let { mensagem ->
+        AvisoPendente(mensagem) { erroGeral = null }
     }
     aviso?.let { id ->
         AvisoPendente(stringResource(id)) {
@@ -264,9 +312,11 @@ fun TelaLogin(
 @Composable
 fun TelaRecuperacao(onVoltar: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var email by rememberSaveable { mutableStateOf("") }
     var erro by remember { mutableStateOf<String?>(null) }
     var enviado by rememberSaveable { mutableStateOf(false) }
+    var carregando by remember { mutableStateOf(false) }
     var aviso by remember { mutableStateOf(false) }
     FundoAutenticacao {
         Box(Modifier.fillMaxSize()) {
@@ -317,9 +367,40 @@ fun TelaRecuperacao(onVoltar: () -> Unit) {
                             !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> context.getString(R.string.auth_email_invalid)
                             else -> null
                         }
-                        if (erro == null) { enviado = true; aviso = true }
+                        if (erro == null) {
+                            if (Supabase.configurado) {
+                                carregando = true
+                                scope.launch {
+                                    tentar {
+                                        Supabase.cliente.auth.resetPasswordForEmail(
+                                            email = email.trim(),
+                                            redirectUrl = "gyema://reset-password"
+                                        )
+                                    }.onSuccess {
+                                        carregando = false
+                                        enviado = true
+                                    }.onFailure { throwable ->
+                                        carregando = false
+                                        erro = mensagemDeErro(throwable)
+                                    }
+                                }
+                            } else {
+                                enviado = true
+                                aviso = true
+                            }
+                        }
                     }
                 })
+            }
+            if (carregando) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color(0x99000000)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = LaranjaAuth)
+                }
             }
         }
     }

@@ -41,14 +41,31 @@ import br.com.gyema.ui.tema.*
 @Composable
 fun TelaCadastroPasso2(
     onVoltar: () -> Unit = {},
-    onAvancar: () -> Unit = {}
+    onAvancar: (cpf: String, matricula: String, dataNascimento: String, genero: String, peso: String, altura: String) -> Unit = { _, _, _, _, _, _ -> },
+    cpfInicial: String = "",
+    matriculaInicial: String = "",
+    dataNascimentoInicial: String = "",
+    generoInicial: String = "",
+    pesoInicial: String = "",
+    alturaInicial: String = ""
 ) {
-    var cpf by remember { mutableStateOf("") }
-    var matricula by remember { mutableStateOf("") }
-    var dataNascimento by remember { mutableStateOf("") }
-    var genero by remember { mutableStateOf("") }
-    var peso by remember { mutableStateOf("") }
-    var altura by remember { mutableStateOf("") }
+    var cpf by remember(cpfInicial) { mutableStateOf(cpfInicial) }
+    var matricula by remember(matriculaInicial) { mutableStateOf(matriculaInicial) }
+    var dataNascimento by remember(dataNascimentoInicial) { mutableStateOf(dataNascimentoInicial) }
+    var genero by remember(generoInicial) { mutableStateOf(generoInicial) }
+    var peso by remember(pesoInicial) { mutableStateOf(pesoInicial) }
+    var altura by remember(alturaInicial) { mutableStateOf(alturaInicial) }
+    var erro by remember { mutableStateOf<String?>(null) }
+
+    fun validarEAvancar() {
+        erro = when {
+            cpf.isBlank() -> "Informe o seu CPF."
+            else -> null
+        }
+        if (erro == null) {
+            onAvancar(cpf.trim(), matricula.trim(), dataNascimento.trim(), genero.trim(), peso.trim(), altura.trim())
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -299,6 +316,15 @@ fun TelaCadastroPasso2(
             }
         }
 
+            erro?.let { mensagem ->
+                Text(
+                    text = mensagem,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF9999)
+                )
+            }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         // botao avancar
@@ -309,7 +335,7 @@ fun TelaCadastroPasso2(
                 .height(50.dp)
                 .clip(shapeBotao)
                 .background(Laranja)
-                .clickable(onClick = onAvancar),
+                .clickable(onClick = ::validarEAvancar),
             contentAlignment = Alignment.Center
         ) {
             Row(

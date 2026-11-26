@@ -40,13 +40,29 @@ import br.com.gyema.ui.tema.*
 @Composable
 fun TelaCadastroPasso1(
     onVoltar: () -> Unit = {},
-    onAvancar: () -> Unit = {},
-    onLogin: () -> Unit = {}
+    onAvancar: (nome: String, email: String, senha: String) -> Unit = { _, _, _ -> },
+    onLogin: () -> Unit = {},
+    nomeInicial: String = "",
+    emailInicial: String = "",
+    senhaInicial: String = ""
 ) {
-    var nome by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var senha by remember { mutableStateOf("") }
+    var nome by remember(nomeInicial) { mutableStateOf(nomeInicial) }
+    var email by remember(emailInicial) { mutableStateOf(emailInicial) }
+    var senha by remember(senhaInicial) { mutableStateOf(senhaInicial) }
     var senhaVisivel by remember { mutableStateOf(false) }
+    var erro by remember { mutableStateOf<String?>(null) }
+
+    fun validarEAvancar() {
+        erro = when {
+            nome.isBlank() -> "Informe seu nome completo."
+            email.isBlank() || !email.contains("@") -> "Informe um e-mail válido."
+            senha.length < 6 -> "A senha deve conter no mínimo 6 caracteres."
+            else -> null
+        }
+        if (erro == null) {
+            onAvancar(nome.trim(), email.trim(), senha)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -276,6 +292,15 @@ fun TelaCadastroPasso1(
             }
         }
 
+            erro?.let { mensagem ->
+                Text(
+                    text = mensagem,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF9999)
+                )
+            }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         // botao avancar
@@ -286,7 +311,7 @@ fun TelaCadastroPasso1(
                 .height(50.dp)
                 .clip(shapeBotao)
                 .background(Laranja)
-                .clickable(onClick = onAvancar),
+                .clickable(onClick = ::validarEAvancar),
             contentAlignment = Alignment.Center
         ) {
             Row(
