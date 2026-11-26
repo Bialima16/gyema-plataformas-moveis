@@ -10,7 +10,9 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object Recuperacao : Tela("recuperacao", "Recuperação", Icons.Outlined.Lock)
     object DetalhesExercicio : Tela("detalhes_exercicio", "Exercício", Icons.Outlined.FitnessCenter)
     object EquipamentoOcupado : Tela("equipamento_ocupado", "Equipamento ocupado", Icons.Outlined.Warning)
-    object ResumoTreino : Tela("resumo_treino", "Resumo", Icons.Outlined.CheckCircle)
+    object ResumoTreino : Tela("resumo_treino/{execucaoId}", "Resumo", Icons.Outlined.CheckCircle) {
+        fun criar(execucaoId: Long) = "resumo_treino/$execucaoId"
+    }
     object Grupos : Tela("grupos", "Grupos", Icons.Outlined.Groups)
     object CriarGrupo : Tela("criar_grupo", "Criar grupo", Icons.Outlined.GroupAdd)
     object CriarGrupoValidacao : Tela("criar_grupo_validacao", "Validação de grupo", Icons.Outlined.Warning)
@@ -28,14 +30,29 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
     object CadastroPasso1 : Tela("cadastro_passo_1", "Cadastro", Icons.Outlined.PersonAdd)
     object CadastroPasso2 : Tela("cadastro_passo_2", "Informações pessoais", Icons.Outlined.Badge)
     object CadastroPasso3 : Tela("cadastro_passo_3", "Teste de prontidão", Icons.Outlined.Assignment)
-    object RegistroUtilizacao : Tela("registro_utilizacao", "Registro de utilização", Icons.Outlined.Timer)
-    object ReportarProblema : Tela("reportar_problema", "Reportar problema", Icons.Outlined.Warning)
+    object RegistroUtilizacao : Tela("registro_utilizacao?equipamentoId={equipamentoId}", "Registro de utilização", Icons.Outlined.Timer) {
+        fun criar(equipamentoId: Int? = null) =
+            if (equipamentoId == null) "registro_utilizacao" else "registro_utilizacao?equipamentoId=$equipamentoId"
+    }
+    object ReportarProblema : Tela("reportar_problema?equipamentoId={equipamentoId}", "Reportar problema", Icons.Outlined.Warning) {
+        fun criar(equipamentoId: Int? = null) =
+            if (equipamentoId == null) "reportar_problema" else "reportar_problema?equipamentoId=$equipamentoId"
+    }
     object ProblemaReportado : Tela("problema_reportado", "Problema reportado", Icons.Outlined.CheckCircle)
-    object DetalhesTreino : Tela("detalhes_treino", "Detalhes do treino", Icons.Outlined.Description)
-    object Execucao : Tela("execucao", "Execução", Icons.Outlined.PlayArrow)
+    object DetalhesTreino : Tela("detalhes_treino/{fichaId}", "Detalhes do treino", Icons.Outlined.Description) {
+        fun criar(fichaId: Long) = "detalhes_treino/$fichaId"
+    }
+    object Execucao : Tela("execucao/{fichaId}", "Execução", Icons.Outlined.PlayArrow) {
+        fun criar(fichaId: Long) = "execucao/$fichaId"
+    }
     object MapaAcademia : Tela("mapa_academia", "Mapa da academia", Icons.Outlined.Map)
-    object Equipamentos : Tela("equipamentos", "Equipamentos", Icons.Outlined.Construction)
-    object DetalhesEquipamento : Tela("detalhes_equipamento", "Detalhes do equipamento", Icons.Outlined.FitnessCenter)
+    object Equipamentos : Tela("equipamentos?setorId={setorId}", "Equipamentos", Icons.Outlined.Construction) {
+        fun criar(setorId: Int? = null) =
+            if (setorId == null) "equipamentos" else "equipamentos?setorId=$setorId"
+    }
+    object DetalhesEquipamento : Tela("detalhes_equipamento/{equipamentoId}", "Detalhes do equipamento", Icons.Outlined.FitnessCenter) {
+        fun criar(equipamentoId: Int) = "detalhes_equipamento/$equipamentoId"
+    }
 
     // Rotas para o fluxo do Instrutor
     // Rotas com argumento: use as funções criar(...) para montar o caminho ao navegar.

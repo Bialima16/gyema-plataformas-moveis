@@ -14,33 +14,70 @@ import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.gyema.data.CargaMensalAluno
+import br.com.gyema.data.ExecucaoResumo
+import br.com.gyema.data.RepositorioAluno
+import br.com.gyema.data.mensagemDeErro
+import br.com.gyema.data.tentar
 import br.com.gyema.ui.components.CardGyema
+import br.com.gyema.ui.components.EstadoCarregando
+import br.com.gyema.ui.components.EstadoErro
+import br.com.gyema.ui.components.EstadoVazio
 import br.com.gyema.ui.components.TituloSecao
+import br.com.gyema.ui.components.formatarData
+import br.com.gyema.ui.components.minutosEntre
+import br.com.gyema.ui.components.numeroBr
+import br.com.gyema.ui.components.contagem
 import br.com.gyema.ui.tema.*
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.format.TextStyle
+import java.util.Locale
 
-private data class Carga(val mes: String, val kg: Int)
-private data class Treino(val data: String, val titulo: String, val duracao: String, val exercicios: String)
-
-private val cargas = listOf(Carga("Jun", 45), Carga("Jul", 60), Carga("Ago", 75), Carga("Set", 90))
-
-private val treinos = listOf(
-    Treino("25/09", "Treino A — Peito e Tríceps", "45min", "Supino reto, Supino inclinado, Crucifixo..."),
-    Treino("23/09", "Treino B — Costas e Bíceps", "50min", "Puxada frontal, Remada curvada, Rosca direta..."),
-    Treino("20/09", "Treino C — Pernas Completo", "40min", "Agachamento, Leg press, Cadeira extensora...")
+private data class DadosEvolucao(
+    val diasComTreino: Set<LocalDate>,
+    val cargas: List<CargaMensalAluno>,
+    val ultimos: List<ExecucaoResumo>
 )
+
+private val ptBR = Locale("pt", "BR")
 
 @Composable
 fun TelaEvolucao(onVoltar: () -> Unit = {}) {
+    var dados by remember { mutableStateOf<DadosEvolucao?>(null) }
+    var erro by remember { mutableStateOf<String?>(null) }
+    var tentativa by remember { mutableIntStateOf(0) }
+    var mes by remember { mutableStateOf(YearMonth.now()) }
+
+    LaunchedEffect(tentativa) {
+        erro = null
+        tentar {
+            val fuso = ZoneId.systemDefault()
+            DadosEvolucao(
+                RepositorioAluno.minhasExecucoes().mapNotNull {
+                    runCatching { OffsetDateTime.parse(it.inicio).atZoneSameInstant(fuso).toLocalDate() }.getOrNull()
+                }.toSet(),
+                RepositorioAluno.minhasCargasMensais(),
+                RepositorioAluno.historicoTreinos(limite = 5)
+            )
+        }
+            .onSuccess { dados = it }
+            .onFailure { erro = mensagemDeErro(it) }
+    }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -65,45 +102,65 @@ fun TelaEvolucao(onVoltar: () -> Unit = {}) {
             Text("Minha evolução", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
 
-        Calendario()
+        val atual = dados
+        when {
+            erro != null -> EstadoErro(erro!!, onTentarNovamente = { tentativa++ })
+            atual == null -> EstadoCarregando()
+            else -> {
+                Calendario(mes, atual.diasComTreino, onAnterior = { mes = mes.minusMonths(1) }, onProximo = { mes = mes.plusMonths(1) })
 
-        TituloSecao("EVOLUÇÃO DE CARGA")
-        GraficoCarga()
+                TituloSecao("EVOLUÇÃO DE CARGA")
+                val ultimosMeses = atual.cargas.filter { (it.cargaMaxKg ?: 0.0) > 0 }.take(6).reversed()
+                if (ultimosMeses.isEmpty()) {
+                    EstadoVazio("Sem cargas ainda", "Registre séries com carga na execução do treino.")
+                } else {
+                    GraficoCarga(ultimosMeses)
+                }
 
-        TituloSecao("ÚLTIMOS TREINOS")
-        treinos.forEach { TreinoCard(it) }
+                TituloSecao("ÚLTIMOS TREINOS")
+                if (atual.ultimos.isEmpty()) {
+                    EstadoVazio("Nenhum treino feito", "Seus treinos aparecem aqui.")
+                } else {
+                    atual.ultimos.forEach { TreinoCard(it) }
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun Calendario() {
+private fun Calendario(mes: YearMonth, diasComTreino: Set<LocalDate>, onAnterior: () -> Unit, onProximo: () -> Unit) {
     val diasSemana = listOf("D", "S", "T", "Q", "Q", "S", "S")
-    // Setembro/2025: 31 (ago) + 1..30 + 1..4 (out)
-    val celulas = listOf(31) + (1..30).toList() + (1..4).toList()
-    val marcados = setOf(2, 5, 8, 12, 15, 19, 20, 23, 25)
+    val primeiro = mes.atDay(1)
+    val deslocamento = primeiro.dayOfWeek.value % 7
+    val totalCelulas = ((deslocamento + mes.lengthOfMonth() + 6) / 7) * 7
+    val celulas = (0 until totalCelulas).map { primeiro.minusDays(deslocamento.toLong()).plusDays(it.toLong()) }
+    val titulo = mes.month.getDisplayName(TextStyle.FULL, ptBR).replaceFirstChar { it.uppercase() } + " ${mes.year}"
+    val treinosNoMes = diasComTreino.count { YearMonth.from(it) == mes }
 
     CardGyema(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Setembro 2025", fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Icon(Icons.Outlined.ChevronLeft, null, tint = TextoSecundario, modifier = Modifier.size(20.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(titulo, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("${contagem(treinosNoMes, "dia", "dias")} com treino", fontSize = 11.sp, color = TextoSecundario)
+                }
+                Icon(Icons.Outlined.ChevronLeft, "Mês anterior", tint = TextoSecundario,
+                    modifier = Modifier.size(28.dp).clickable(onClick = onAnterior))
                 Spacer(Modifier.width(8.dp))
-                Icon(Icons.Outlined.ChevronRight, null, tint = TextoSecundario, modifier = Modifier.size(20.dp))
+                Icon(Icons.Outlined.ChevronRight, "Próximo mês", tint = TextoSecundario,
+                    modifier = Modifier.size(28.dp).clickable(onClick = onProximo))
             }
             Row(Modifier.fillMaxWidth()) {
                 diasSemana.forEach {
-                    Text(
-                        it, fontSize = 11.sp, color = TextoSecundario,
-                        modifier = Modifier.weight(1f),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+                    Text(it, fontSize = 11.sp, color = TextoSecundario, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                 }
             }
-            celulas.withIndex().chunked(7).forEach { linha ->
+            celulas.chunked(7).forEach { linha ->
                 Row(Modifier.fillMaxWidth()) {
-                    linha.forEach { (i, dia) ->
-                        val doMes = i in 1..30
-                        DiaCalendario(dia, doMes, doMes && dia in marcados, Modifier.weight(1f))
+                    linha.forEach { data ->
+                        val doMes = YearMonth.from(data) == mes
+                        DiaCalendario(data.dayOfMonth, doMes, doMes && data in diasComTreino, Modifier.weight(1f))
                     }
                 }
             }
@@ -130,8 +187,8 @@ private fun DiaCalendario(dia: Int, doMes: Boolean, marcado: Boolean, modifier: 
 }
 
 @Composable
-private fun GraficoCarga() {
-    val maxKg = cargas.maxOf { it.kg }
+private fun GraficoCarga(cargas: List<CargaMensalAluno>) {
+    val maxKg = cargas.maxOf { it.cargaMaxKg ?: 0.0 }.coerceAtLeast(1.0)
     CardGyema(Modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -139,18 +196,23 @@ private fun GraficoCarga() {
             verticalAlignment = Alignment.Bottom
         ) {
             cargas.forEach { c ->
+                val kg = c.cargaMaxKg ?: 0.0
+                val rotulo = runCatching {
+                    LocalDate.parse(c.mes.take(10)).month.getDisplayName(TextStyle.SHORT, ptBR)
+                        .replace(".", "").replaceFirstChar { it.uppercase() }
+                }.getOrDefault(c.mes)
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${c.kg} kg", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Laranja)
+                    Text("${numeroBr(kg)} kg", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Laranja)
                     Spacer(Modifier.height(4.dp))
                     Box(
                         Modifier
                             .width(30.dp)
-                            .height((64 * c.kg / maxKg.toFloat()).dp)
+                            .height((64 * kg / maxKg).dp)
                             .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
                             .background(Laranja)
                     )
                     Spacer(Modifier.height(6.dp))
-                    Text(c.mes, fontSize = 12.sp, color = TextoSecundario)
+                    Text(rotulo, fontSize = 12.sp, color = TextoSecundario)
                 }
             }
         }
@@ -158,26 +220,28 @@ private fun GraficoCarga() {
 }
 
 @Composable
-private fun TreinoCard(t: Treino) {
+private fun TreinoCard(t: ExecucaoResumo) {
+    val exercicios = t.series.map { it.exercicios.nome }.distinct()
     CardGyema(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.clip(RoundedCornerShape(6.dp)).background(RoxoEscuro)
                         .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) { Text(t.data, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Laranja) }
+                ) { Text(formatarData(t.inicio, "dd/MM"), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Laranja) }
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    t.titulo, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    t.ficha?.nome ?: "Treino livre", fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
                 Icon(Icons.Outlined.AccessTime, null, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(3.dp))
-                Text(t.duracao, fontSize = 12.sp)
+                Text(if (t.fim == null) "em aberto" else "${minutosEntre(t.inicio, t.fim)}min", fontSize = 12.sp)
             }
             Text(
-                t.exercicios, fontSize = 11.sp, color = TextoSecundario,
+                if (exercicios.isEmpty()) "Nenhuma série registrada" else exercicios.joinToString(", "),
+                fontSize = 11.sp, color = TextoSecundario,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }

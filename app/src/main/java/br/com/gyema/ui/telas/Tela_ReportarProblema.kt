@@ -11,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
@@ -29,16 +28,61 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.gyema.data.EquipamentoAluno
+import br.com.gyema.data.RepositorioAluno
+import br.com.gyema.data.mensagemErroAluno
+import br.com.gyema.data.tentar
 import br.com.gyema.ui.components.CardGyema
+import br.com.gyema.ui.components.EstadoCarregando
+import br.com.gyema.ui.components.EstadoErro
+import br.com.gyema.ui.components.iconeEquipamento
+import br.com.gyema.ui.components.statusAmbiente
 import br.com.gyema.ui.tema.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun TelaReportarProblema(
+    equipamentoId: Int? = null,
     onVoltar: () -> Unit = {},
     onEnviarRelato: () -> Unit = {}
 ) {
     var categoria by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
+
+    var equipamentos by remember { mutableStateOf<List<EquipamentoAluno>?>(null) }
+    var selecionado by remember { mutableStateOf<EquipamentoAluno?>(null) }
+    var erroCarga by remember { mutableStateOf<String?>(null) }
+    var tentativa by remember { mutableIntStateOf(0) }
+    var erroEnvio by remember { mutableStateOf<String?>(null) }
+    var enviando by remember { mutableStateOf(false) }
+    val escopo = rememberCoroutineScope()
+
+    LaunchedEffect(tentativa) {
+        erroCarga = null
+        tentar { RepositorioAluno.listarEquipamentos() }
+            .onSuccess { lista ->
+                equipamentos = lista
+                if (equipamentoId != null) selecionado = lista.firstOrNull { it.id == equipamentoId }
+            }
+            .onFailure { erroCarga = mensagemErroAluno(it) }
+    }
+
+    fun enviar() {
+        val eq = selecionado
+        erroEnvio = when {
+            eq == null -> "Escolha o equipamento com problema."
+            descricao.isBlank() -> "Descreva o problema."
+            else -> null
+        }
+        if (erroEnvio != null || eq == null) return
+        enviando = true
+        escopo.launch {
+            tentar { RepositorioAluno.enviarRelato(eq.id, categoria.ifEmpty { "Outros" }, descricao) }
+                .onSuccess { onEnviarRelato() }
+                .onFailure { erroEnvio = mensagemErroAluno(it) }
+            enviando = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -55,26 +99,40 @@ fun TelaReportarProblema(
             // topo da tela
             HeaderReportarProblema(onVoltar = onVoltar)
 
-            // card do equipamento
-            CardEquipamentoSelecionado()
+            val lista = equipamentos
+            when {
+                erroCarga != null -> EstadoErro(erroCarga!!, onTentarNovamente = { tentativa++ })
+                lista == null -> EstadoCarregando()
+                else -> {
+                    CardEquipamentoSelecionado(
+                        equipamento = selecionado,
+                        opcoes = if (equipamentoId == null) lista else emptyList(),
+                        onEscolher = { selecionado = it }
+                    )
 
-            // campo de categoria
-            CampoCategoriaProblema(
-                categoriaSelecionada = categoria,
-                onCategoriaSelecionada = { categoria = it }
-            )
+                    // campo de categoria
+                    CampoCategoriaProblema(
+                        categoriaSelecionada = categoria,
+                        onCategoriaSelecionada = { categoria = it }
+                    )
 
-            // campo de descricao
-            CampoDescricaoProblema(
-                descricao = descricao,
-                onDescricaoChange = { descricao = it }
-            )
+                    // campo de descricao
+                    CampoDescricaoProblema(
+                        descricao = descricao,
+                        onDescricaoChange = { descricao = it }
+                    )
+
+                    erroEnvio?.let { Text(it, color = Laranja, fontSize = 12.sp) }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // clique para enviar relato
-        BotaoEnviarRelato(onClick = onEnviarRelato)
+        BotaoEnviarRelato(texto = if (enviando) "Enviando..." else "Enviar relato") {
+            if (!enviando && equipamentos != null) enviar()
+        }
     }
 }
 
@@ -123,66 +181,100 @@ private fun HeaderReportarProblema(
 
 // card do equipamento
 @Composable
-private fun CardEquipamentoSelecionado() {
-    CardGyema(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+private fun CardEquipamentoSelecionado(
+    equipamento: EquipamentoAluno?,
+    opcoes: List<EquipamentoAluno>,
+    onEscolher: (EquipamentoAluno) -> Unit
+) {
+    var expandido by remember { mutableStateOf(false) }
+    val podeEscolher = opcoes.isNotEmpty()
+    val status = equipamento?.let { statusAmbiente(it.status) }
+
+    Box {
+        CardGyema(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            onClick = if (podeEscolher) ({ expandido = true }) else null
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(SuperficieEscura),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.FitnessCenter,
-                    contentDescription = null,
-                    tint = Verde,
-                    modifier = Modifier.size(22.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SuperficieEscura),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = iconeEquipamento(equipamento?.grupoMuscular),
+                        contentDescription = null,
+                        tint = Verde,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "EQUIPAMENTO SELECIONADO",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Verde,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = equipamento?.nome ?: "Toque para escolher",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (equipamento == null) TextoSecundario else Color.White
+                    )
+                    equipamento?.let {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "${it.codigo} • Área de ${it.setorNome.lowercase()}",
+                            fontSize = 12.sp,
+                            color = TextoSecundario
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                if (status != null) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(SuperficieEscura)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = status.rotulo.uppercase(),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = status.cor
+                        )
+                    }
+                }
+                if (podeEscolher) {
+                    Icon(Icons.Outlined.KeyboardArrowDown, null, tint = TextoSecundario, modifier = Modifier.size(20.dp))
+                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "EQUIPAMENTO SELECIONADO",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Verde,
-                    letterSpacing = 0.5.sp
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Leg press 45°",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "EQ-023 • Área de musculação",
-                    fontSize = 12.sp,
-                    color = TextoSecundario
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SuperficieEscura)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "ATIVO",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Verde
+        }
+
+        DropdownMenu(
+            expanded = expandido,
+            onDismissRequest = { expandido = false },
+            modifier = Modifier.background(Superficie)
+        ) {
+            opcoes.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text("${item.nome} (${item.codigo})", color = Color.White, fontSize = 13.sp) },
+                    onClick = {
+                        onEscolher(item)
+                        expandido = false
+                    }
                 )
             }
         }
@@ -360,6 +452,7 @@ private fun CampoDescricaoProblema(
 // botao de envio
 @Composable
 private fun BotaoEnviarRelato(
+    texto: String,
     onClick: () -> Unit
 ) {
     val shapeBotao = RoundedCornerShape(12.dp)
@@ -373,7 +466,7 @@ private fun BotaoEnviarRelato(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Enviar relato",
+            text = texto,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White
