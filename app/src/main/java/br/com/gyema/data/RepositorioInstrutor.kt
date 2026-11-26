@@ -136,6 +136,15 @@ data class Relato(
     val perfis: NomePessoa? = null
 )
 
+/** Ficha existente carregada para edição (os itens reaproveitam ItemFichaAluno). */
+@Serializable
+data class FichaEdicao(
+    val id: Long,
+    @SerialName("aluno_id") val alunoId: String,
+    val nome: String,
+    @SerialName("itens_ficha") val itens: List<ItemFichaAluno> = emptyList()
+)
+
 /** Um exercício dentro da ficha que o instrutor está montando. */
 data class ItemNovaFicha(
     val exercicio: Exercicio,
@@ -259,6 +268,38 @@ object RepositorioInstrutor {
         db.from("exercicios").select(Columns.list("id", "nome", "grupo_muscular")) {
             order("nome", Order.ASCENDING)
         }.decodeList()
+
+    /** Ficha com os exercícios na ordem, para a tela de edição. */
+    suspend fun buscarFichaEdicao(fichaId: Long): FichaEdicao {
+        usuarioId()
+        val ficha = db.from("fichas_treino").select(
+            Columns.raw(
+                "id, aluno_id, nome, itens_ficha(id, ordem, series, repeticoes, carga_kg, descanso_seg, " +
+                    "observacoes, tecnica, exercicios(id, nome, grupo_muscular))"
+            )
+        ) { filter { eq("id", fichaId) } }.decodeSingle<FichaEdicao>()
+        return ficha.copy(itens = ficha.itens.sortedBy { it.ordem })
+    }
+
+    /**
+     * Edita uma ficha existente: troca o nome/foco e substitui os exercícios.
+     * O histórico de treinos do aluno não é afetado (as séries feitas apontam para o exercício, não para o item).
+     */
+    suspend fun atualizarFicha(fichaId: Long, nome: String, itens: List<ItemNovaFicha>) {
+        usuarioId()
+        val grupoFoco = itens.map { it.exercicio.grupoMuscular }.distinct().joinToString(" e ")
+        db.from("fichas_treino").update({
+            set("nome", nome)
+            set("grupo_foco", grupoFoco.ifBlank { null })
+        }) { filter { eq("id", fichaId) } }
+        db.from("itens_ficha").delete { filter { eq("ficha_id", fichaId) } }
+        db.from("itens_ficha").insert(itens.mapIndexed { i, item ->
+            LinhaItemFicha(
+                fichaId, item.exercicio.id, i + 1, item.series, item.repeticoes,
+                item.cargaKg, item.descansoSeg, item.observacoes, item.tecnica
+            )
+        })
+    }
 
     /** Grava a ficha e os exercícios. Se os exercícios falharem, a ficha é apagada. */
     suspend fun salvarFicha(alunoId: String, nome: String, itens: List<ItemNovaFicha>) {

@@ -37,6 +37,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.gyema.ui.tema.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
+import java.util.Locale
 
 @Composable
 fun TelaCadastroPasso2(
@@ -58,12 +62,26 @@ fun TelaCadastroPasso2(
     var erro by remember { mutableStateOf<String?>(null) }
 
     fun validarEAvancar() {
+        // Peso em kg e altura em cm, como o banco espera. Aceita vírgula e altura em metros (1,65 → 165).
+        val pesoNum = peso.trim().replace(',', '.').toDoubleOrNull()
+        val alturaDigitada = altura.trim().replace(',', '.').toDoubleOrNull()
+        val alturaCm = alturaDigitada?.let { if (it < 3) it * 100 else it }
+        val dataValida = dataNascimento.isBlank() ||
+            runCatching { LocalDate.parse(dataNascimento.trim(), DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT)) }.isSuccess
+
         erro = when {
             cpf.isBlank() -> "Informe o seu CPF."
+            !dataValida -> "Data de nascimento inválida. Use DD/MM/AAAA."
+            peso.isNotBlank() && (pesoNum == null || pesoNum !in 20.0..400.0) -> "O peso deve ficar entre 20 e 400 kg."
+            altura.isNotBlank() && (alturaCm == null || alturaCm !in 80.0..260.0) -> "A altura deve ficar entre 80 e 260 cm (ex.: 165)."
             else -> null
         }
         if (erro == null) {
-            onAvancar(cpf.trim(), matricula.trim(), dataNascimento.trim(), genero.trim(), peso.trim(), altura.trim())
+            onAvancar(
+                cpf.trim(), matricula.trim(), dataNascimento.trim(), genero.trim(),
+                pesoNum?.let { "%.2f".format(Locale.US, it).trimEnd('0').trimEnd('.') } ?: "",
+                alturaCm?.let { "%.1f".format(Locale.US, it).trimEnd('0').trimEnd('.') } ?: ""
+            )
         }
     }
 
@@ -301,7 +319,7 @@ fun TelaCadastroPasso2(
                 CampoInputPasso2(
                     valor = peso,
                     onValorChange = { peso = it },
-                    placeholder = "Peso",
+                    placeholder = "Peso (kg)",
                     icone = Icons.Outlined.FitnessCenter,
                     modifier = Modifier.weight(1f)
                 )
@@ -309,7 +327,7 @@ fun TelaCadastroPasso2(
                 CampoInputPasso2(
                     valor = altura,
                     onValorChange = { altura = it },
-                    placeholder = "Altura",
+                    placeholder = "Altura (cm)",
                     icone = Icons.Outlined.Height,
                     modifier = Modifier.weight(1f)
                 )

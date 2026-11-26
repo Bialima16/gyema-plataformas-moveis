@@ -62,10 +62,12 @@ sealed class Tela(val rota: String, val titulo: String, val icone: ImageVector) 
         fun criar(equipamentoId: Int? = null) =
             if (equipamentoId == null) "cadastrar_equipamento" else "cadastrar_equipamento?equipamentoId=$equipamentoId"
     }
-    object NovaFichaTreino : Tela("nova_ficha_treino?alunoId={alunoId}", "Nova Ficha de Treino (Instrutor)", Icons.Outlined.NoteAdd) {
-        /** Com alunoId a ficha já abre com o aluno selecionado. */
-        fun criar(alunoId: String? = null) =
-            if (alunoId == null) "nova_ficha_treino" else "nova_ficha_treino?alunoId=$alunoId"
+    object NovaFichaTreino : Tela("nova_ficha_treino?alunoId={alunoId}&fichaId={fichaId}", "Nova Ficha de Treino (Instrutor)", Icons.Outlined.NoteAdd) {
+        /** Com alunoId a ficha já abre com o aluno selecionado; com fichaId abre a edição dessa ficha. */
+        fun criar(alunoId: String? = null, fichaId: Long? = null): String {
+            val params = listOfNotNull(alunoId?.let { "alunoId=$it" }, fichaId?.let { "fichaId=$it" })
+            return if (params.isEmpty()) "nova_ficha_treino" else "nova_ficha_treino?" + params.joinToString("&")
+        }
     }
     object RelatosProblemas : Tela("relatos_problemas", "Relatos de Problemas (Instrutor)", Icons.Outlined.ReportProblem)
     object PainelInstrutor : Tela("painel_instrutor", "Painel do Instrutor (Instrutor)", Icons.Outlined.Dashboard)

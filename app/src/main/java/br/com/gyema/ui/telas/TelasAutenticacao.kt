@@ -134,7 +134,7 @@ private fun CampoAutenticacao(valor: String, aoMudar: (String) -> Unit,
 }
 
 @Composable
-fun TelaBoasVindas(onEntrar: () -> Unit, onCadastrar: () -> Unit = {}, onDemonstracao: () -> Unit = {}) {
+fun TelaBoasVindas(onEntrar: () -> Unit, onCadastrar: () -> Unit = {}) {
     var aviso by remember { mutableStateOf(false) }
     FundoAutenticacao {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -153,8 +153,6 @@ fun TelaBoasVindas(onEntrar: () -> Unit, onCadastrar: () -> Unit = {}, onDemonst
             BotaoAutenticacao(stringResource(R.string.model_login), onEntrar)
             Spacer(Modifier.height(22.dp))
             BotaoAutenticacao(stringResource(R.string.model_register), onCadastrar, true)
-            Spacer(Modifier.height(12.dp))
-            TextButton(onClick = onDemonstracao) { Text("Explorar telas (demonstração)", color = TextoLaranja, fontSize = 12.sp) }
             Spacer(Modifier.height(45.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 listOf(R.string.model_terms, R.string.model_privacy, R.string.model_support).forEach { id ->

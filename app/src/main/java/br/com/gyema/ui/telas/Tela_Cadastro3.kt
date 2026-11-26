@@ -20,7 +20,8 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import br.com.gyema.ui.components.AvisoPendente
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -55,7 +56,7 @@ private val perguntasProntidao = listOf(
 @Composable
 fun TelaCadastroPasso3(
     onVoltar: () -> Unit = {},
-    onConcluir: (contato: String) -> Unit = {},
+    onConcluir: (contato: String, respostas: Map<Int, Boolean>) -> Unit = { _, _ -> },
     contatoInicial: String = "",
     carregando: Boolean = false,
     erroGeral: String? = null,
@@ -347,7 +348,7 @@ fun TelaCadastroPasso3(
                     .height(50.dp)
                     .clip(shapeBotao)
                     .background(Laranja)
-                    .clickable(onClick = { onConcluir(numeroContato) }),
+                    .clickable(onClick = { if (!carregando) onConcluir(numeroContato, respostas.toMap()) }),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
@@ -400,7 +401,12 @@ fun TelaCadastroPasso3(
     }
 
     erroGeral?.let { mensagem ->
-        AvisoPendente(mensagem) { onLimparErro() }
+        AlertDialog(
+            onDismissRequest = onLimparErro,
+            title = { Text("Não foi possível cadastrar") },
+            text = { Text(mensagem) },
+            confirmButton = { TextButton(onClick = onLimparErro) { Text("Entendi") } }
+        )
     }
 }
 

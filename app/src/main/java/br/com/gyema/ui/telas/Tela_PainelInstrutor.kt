@@ -16,7 +16,10 @@ import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,9 +45,11 @@ fun TelaPainelInstrutor(
     onFichasTreinoClick: () -> Unit = {},
     onEquipamentosClick: () -> Unit = {},
     onRelatosProblemasClick: () -> Unit = {},
-    onNotificacoesClick: () -> Unit = {}
+    onNotificacoesClick: () -> Unit = {},
+    onSairClick: () -> Unit = {}
 ) {
     var perfil by remember { mutableStateOf<PerfilResumo?>(null) }
+    var confirmarSaida by remember { mutableStateOf(false) }
     var relatosAbertos by remember { mutableIntStateOf(0) }
     var aviso by remember { mutableStateOf<String?>(null) }
 
@@ -61,6 +66,23 @@ fun TelaPainelInstrutor(
     }
 
     val primeiroNome = perfil?.nome?.trim()?.substringBefore(' ').orEmpty()
+
+    if (confirmarSaida) {
+        AlertDialog(
+            onDismissRequest = { confirmarSaida = false },
+            containerColor = Superficie,
+            title = { Text("Sair da conta?", fontWeight = FontWeight.Bold, color = Color.White) },
+            text = { Text("Você vai voltar para a tela de boas-vindas.", color = TextoSecundario) },
+            confirmButton = {
+                TextButton(onClick = { confirmarSaida = false; onSairClick() }) {
+                    Text("Sair", color = Laranja, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarSaida = false }) { Text("Cancelar", color = TextoSecundario) }
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -110,6 +132,23 @@ fun TelaPainelInstrutor(
                     )
                 }
                 SinoRelatos(quantidade = relatosAbertos, onClick = onNotificacoesClick)
+                Spacer(modifier = Modifier.width(8.dp))
+                // Sair da conta (pede confirmação)
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(SuperficieEscura)
+                        .clickable { confirmarSaida = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.Logout,
+                        contentDescription = "Sair da conta",
+                        tint = TextoSecundario,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             aviso?.let { texto ->

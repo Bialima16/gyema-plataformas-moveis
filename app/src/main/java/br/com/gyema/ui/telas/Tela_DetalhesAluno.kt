@@ -50,7 +50,8 @@ fun TelaDetalhesAluno(
     alunoId: String,
     modifier: Modifier = Modifier,
     onVoltarClick: () -> Unit = {},
-    onCriarNovaFichaClick: (alunoId: String) -> Unit = {}
+    onCriarNovaFichaClick: (alunoId: String) -> Unit = {},
+    onEditarFichaClick: (alunoId: String, fichaId: Long) -> Unit = { _, _ -> }
 ) {
     var dados by remember { mutableStateOf<DadosAluno?>(null) }
     var erro by remember { mutableStateOf<String?>(null) }
@@ -114,7 +115,7 @@ fun TelaDetalhesAluno(
             when {
                 erro != null -> EstadoErro(erro!!, onTentarNovamente = { tentativa++ })
                 d == null -> EstadoCarregando()
-                else -> ConteudoAluno(d)
+                else -> ConteudoAluno(d) { fichaId -> onEditarFichaClick(alunoId, fichaId) }
             }
         }
 
@@ -142,7 +143,7 @@ fun TelaDetalhesAluno(
 }
 
 @Composable
-private fun ConteudoAluno(dados: DadosAluno) {
+private fun ConteudoAluno(dados: DadosAluno, onEditarFicha: (fichaId: Long) -> Unit) {
     val aluno = dados.aluno
 
     // card perfil aluno
@@ -225,7 +226,7 @@ private fun ConteudoAluno(dados: DadosAluno) {
         if (dados.fichas.isEmpty()) {
             TextoInformativo("Este aluno ainda não tem fichas. Toque em \"Criar nova ficha\".")
         }
-        dados.fichas.forEach { CardFicha(it) }
+        dados.fichas.forEach { ficha -> CardFicha(ficha) { onEditarFicha(ficha.id) } }
     }
 
     // historico de treinos
@@ -255,10 +256,11 @@ private fun TextoInformativo(texto: String) {
 }
 
 @Composable
-private fun CardFicha(ficha: FichaResumo) {
+private fun CardFicha(ficha: FichaResumo, onClick: () -> Unit) {
     CardGyema(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier

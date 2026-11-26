@@ -56,6 +56,7 @@ private class ItemEditavel(val exercicio: Exercicio) {
 @Composable
 fun TelaNovaFichaTreino(
     alunoIdInicial: String? = null,
+    fichaId: Long? = null,
     onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {}
 ) {
@@ -77,7 +78,27 @@ fun TelaNovaFichaTreino(
 
     LaunchedEffect(tentativa) {
         erroCarregar = null
-        tentar { RepositorioInstrutor.listarAlunos() to RepositorioInstrutor.listarExercicios() }
+        tentar {
+            val a = RepositorioInstrutor.listarAlunos()
+            val e = RepositorioInstrutor.listarExercicios()
+            // Edição: carrega a ficha e preenche aluno, nome e exercícios.
+            if (fichaId != null && itens.isEmpty()) {
+                val ficha = RepositorioInstrutor.buscarFichaEdicao(fichaId)
+                alunoId = ficha.alunoId
+                nomeFicha = ficha.nome
+                ficha.itens.forEach { item ->
+                    itens.add(ItemEditavel(item.exercicios).apply {
+                        series = item.series.toString()
+                        repeticoes = item.repeticoes.toString()
+                        carga = item.cargaKg?.let { c -> if (c % 1.0 == 0.0) c.toInt().toString() else c.toString().replace('.', ',') }.orEmpty()
+                        descanso = item.descansoSeg?.toString().orEmpty()
+                        observacoes = item.observacoes.orEmpty()
+                        tecnica = item.tecnica.orEmpty()
+                    })
+                }
+            }
+            a to e
+        }
             .onSuccess { (a, e) -> alunos = a; exercicios = e }
             .onFailure { erroCarregar = mensagemDeErro(it) }
     }
@@ -89,7 +110,8 @@ fun TelaNovaFichaTreino(
         salvando = true
         escopo.launch {
             tentar {
-                RepositorioInstrutor.salvarFicha(alunoId!!, nomeFicha.trim(), itens.map { it.paraItem() })
+                if (fichaId != null) RepositorioInstrutor.atualizarFicha(fichaId, nomeFicha.trim(), itens.map { it.paraItem() })
+                else RepositorioInstrutor.salvarFicha(alunoId!!, nomeFicha.trim(), itens.map { it.paraItem() })
             }.onSuccess {
                 Toast.makeText(context, "Ficha salva", Toast.LENGTH_SHORT).show()
                 onSaveClick()
@@ -103,7 +125,7 @@ fun TelaNovaFichaTreino(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Nova ficha de treino",
+                        text = if (fichaId != null) "Editar ficha de treino" else "Nova ficha de treino",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -141,7 +163,8 @@ fun TelaNovaFichaTreino(
                 SeletorAluno(
                     alunos = listaAlunos,
                     selecionadoId = alunoId,
-                    onSelecionar = { alunoId = it; erroSalvar = null }
+                    // Na edição o aluno não muda (a ficha é dele).
+                    onSelecionar = { if (fichaId == null) { alunoId = it; erroSalvar = null } }
                 )
 
                 // Nome da ficha
